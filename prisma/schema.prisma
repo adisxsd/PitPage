@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  AUTHOR
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  name String 
+  username String @unique
+  email String @unique
+  password String
+  bio String?
+  avatar String?
+  role Role @default(AUTHOR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  articles Article[]
+  comments Comment[]
+}
+
+model Article {
+  id Int @id @default(autoincrement())
+  title String 
+  slug String @unique
+  content String
+  thumbnail String?
+  status ArticleStatus @default(DRAFT)
+
+  publishedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authorId Int
+  categoryId Int
+  driverId Int
+
+  author User @relation(fields: [authorId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  driver Driver @relation(fields: [driverId], references: [id])
+
+  comments Comment[]
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+
+  name      String   @unique
+  slug String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  articles  Article[]
+}
+
+model Driver {
+  id Int @id @default(autoincrement())
+  name String @unique
+  number String
+  team String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  articles Article[]
+}
+
+model Comment {
+  id Int @id @default(autoincrement())
+  content String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId Int
+  articleId Int
+
+  user       User    @relation(fields: [userId], references: [id])
+  article    Article @relation(fields: [articleId], references: [id])
+}

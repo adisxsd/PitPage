@@ -1,0 +1,19 @@
+{
+  "name": "pitlane-backend",
+  "version": "1.0.0",
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "prisma": "^6.19.3"
+  },
+  "main": "server.js",
+  "scripts": {
+    "start": "server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
