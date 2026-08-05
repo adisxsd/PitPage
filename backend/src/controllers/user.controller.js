@@ -5,10 +5,12 @@ async function register(req, res) {
     try {
         const user = await userService.register(name, username, email, password);
         res.status(201).json(user);
-    } catch (error) {
-        console.error('Error registering user:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
+    } catch(error){
+    return res.status(400).json({
+        success:false,
+        message:error.message,
+    });
+}
 };
 async function login(req, res) {
     const { username, password } = req.body;

@@ -18,12 +18,29 @@ async function login(username) {
             username: username,
         },
     });
-    return user;
-}
+};
+
+async function findByUsername(username) {
+    return await prisma.user.findUnique({
+        where: {
+            username,
+        },
+    });
+};
+
+async function findByEmail(email) {
+    return await prisma.user.findUnique({
+        where: {
+            email,
+        },
+    });
+};
 
 module.exports = {
     register,
     login,
+    findByUsername,
+    findByEmail,
 };
 
 
