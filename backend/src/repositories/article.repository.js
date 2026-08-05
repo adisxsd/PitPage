@@ -127,6 +127,23 @@ async function createArticle(data) {
     });
 };
 
+async function updateArticle(slug, data) {
+    return await prisma.article.update({
+        where: {
+            slug: slug,
+        },
+        data: data,
+    });
+};
+
+async function deleteArticle(slug) {
+    return await prisma.article.delete({
+        where: {
+            slug: slug,
+        },
+    });
+};
+
 module.exports = {
     findAll,
     findBySlug,
@@ -135,4 +152,6 @@ module.exports = {
     findByAuthorId,
     findLatestArticles,
     createArticle,
+    updateArticle,
+    deleteArticle,
 };

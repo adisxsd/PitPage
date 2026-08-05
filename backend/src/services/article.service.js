@@ -49,6 +49,16 @@ async function createArticle(data) {
     return article;
 };
 
+async function updateArticle(slug, data) {
+    const article = await articleRepository.updateArticle(slug, data);
+    return article;
+};
+
+async function deleteArticle(slug) {
+    const article = await articleRepository.deleteArticle(slug);
+    return article;
+}
+
 module.exports = {
     getAllArticles,
     getArticleBySlug,
@@ -57,5 +67,7 @@ module.exports = {
     getArticleByAuthorId,
     findLatestArticles,
     createArticle,
+    updateArticle,
+    deleteArticle,
 };
 

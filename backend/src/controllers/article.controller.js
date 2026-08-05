@@ -141,7 +141,45 @@ async function createArticle(req, res) {
             message: "Internal Server Error",
         });
     };
-}
+};
+
+async function updateArticle(req, res) {
+    const { slug } = req.params;
+    const data = req.body;
+
+    try {
+        const article = await articleService.updateArticle(slug, data);
+        res.status(200).json({
+            success: true,
+            message: "Article updated successfully",
+            data: article,
+        });
+    } catch (error) {
+        console.error("Error updating article:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        });
+    }
+};
+
+async function deleteArticle(req, res) {
+    const { slug } = req.params;
+    try {
+        const article = await articleService.deleteArticle(slug);
+        res.status(200).json({
+            success: true,
+            message: "Article deleted successfully",
+            data: article,
+        });
+    } catch (error) {
+        console.error("Error deleting article:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        });
+    }
+};
 
 module.exports = {
     getAllArticles,
@@ -151,4 +189,6 @@ module.exports = {
     getArticleByAuthorId,
     createArticle,
     findLatestArticles,
+    updateArticle,
+    deleteArticle,
 };
