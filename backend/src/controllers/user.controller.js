@@ -4,7 +4,17 @@ async function register(req, res) {
     const { name, username, email, password } = req.body;
     try {
         const user = await userService.register(name, username, email, password);
-        res.status(201).json(user);
+        return res.status(201).json({
+            success: true,
+            message: "Register successful",
+            data: {
+                id: user.id,
+                name: user.name,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+            },
+        });
     } catch(error){
     return res.status(400).json({
         success:false,
@@ -19,14 +29,18 @@ async function login(req, res) {
         if (!result) {
             return res.status(401).json({ error: 'Invalid username or password' });
         }
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             message: "Login successful",
-            data: result,
+            data: {
+                token: result.token,
+                user: result.username
+            }
         });
+
     } catch (error) {
         console.error('Error logging in user:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        return res.status(500).json({ error: 'Internal Server Error' });
     }   
 };
 
