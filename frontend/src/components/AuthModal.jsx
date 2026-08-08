@@ -1,125 +1,194 @@
-import React from 'react';
+import React, { useState } from 'react';
 import useAuthStore from '../store/useAuthStore';
 import logo from '../assets/logo.png';
 
 export default function AuthModal() {
-  const { isModalOpen, closeModal, modalView, setModalView, login } = useAuthStore();
+  const { isModalOpen, closeModal, modalView, setModalView, login, register } = useAuthStore();
 
-  // Jika state isModalOpen false, pop-up tidak akan muncul
+  // State untuk menangkap inputan form
+  const [loginUser, setLoginUser] = useState('');
+  const [loginPass, setLoginPass] = useState('');
+
+  const [regName, setRegName] = useState('');
+  const [regUser, setRegUser] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPass, setRegPass] = useState('');
+  const [regConfirm, setRegConfirm] = useState('');
+
+  // State untuk loading dan pesan error/sukses
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
   if (!isModalOpen) return null;
+
+  // Fungsi ganti layar
+  const switchView = (view) => {
+    setModalView(view);
+    setErrorMsg('');
+    setSuccessMsg('');
+  };
+
+  // Eksekusi Login
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMsg('');
+    
+    const res = await login(loginUser, loginPass);
+    // Ditambahkan res? agar aman jika res undefined
+    if (!res || !res.success) { 
+      setErrorMsg(res?.message || 'Gagal melakukan login.');
+    }
+    setIsLoading(false);
+  };
+
+  // Eksekusi Register
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    if (regPass !== regConfirm) {
+      setErrorMsg('Konfirmasi password tidak cocok!');
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMsg('');
+    
+    const res = await register(regName, regUser, regEmail, regPass);
+    if (res.success) {
+      setSuccessMsg('Akun Paddock berhasil dibuat! Silakan Login.');
+      setRegName(''); setRegUser(''); setRegEmail(''); setRegPass(''); setRegConfirm('');
+    } else {
+      setErrorMsg(res.message);
+    }
+    setIsLoading(false);
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      {/* Area luar pop-up (klik untuk menutup) */}
       <div className="absolute inset-0" onClick={closeModal}></div>
       
-      {/* Kotak Pop-up */}
-      <div className="relative bg-[#1A1A1A] border border-gray-800 w-full max-w-md p-8 rounded-lg shadow-2xl z-10">
+      <div className="relative bg-[#1A1A1A] border border-gray-800 w-full max-w-md p-8 rounded-lg shadow-2xl z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
         
-        {/* Tombol Tutup (X) */}
-        <button onClick={closeModal} className="absolute top-4 right-4 text-gray-500 hover:text-white transition">
-          ✕
-        </button>
+        <button onClick={closeModal} className="absolute top-4 right-4 text-gray-500 hover:text-white transition">✕</button>
 
-        {/* Tampilan LOGIN */}
+        <div className="flex justify-center mb-6 mt-2">
+          <img src={logo} alt="PitPage Logo" className="h-16 md:h-20 object-contain drop-shadow-xl" />
+        </div>
+
+        {/* Notifikasi Error / Sukses */}
+        {errorMsg && <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded text-red-500 text-xs text-center">{errorMsg}</div>}
+        {successMsg && <div className="mb-4 p-3 bg-green-500/20 border border-green-500 rounded text-green-400 text-xs text-center">{successMsg}</div>}
+
+        {/* --- TAMPILAN LOGIN --- */}
         {modalView === 'login' ? (
           <div>
-            <div className="flex justify-center mb-6">
-              <img src={logo} alt="PitPage Logo" className="h-8 object-contain" />
-            </div>
             <h2 className="text-2xl font-bold text-white text-center mb-1">Paddock Access</h2>
             <p className="text-sm text-gray-400 text-center mb-6">Enter your telemetry credentials to continue.</p>
             
-            <form onSubmit={(e) => { e.preventDefault(); login(); }} className="space-y-4">
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Email or Username</label>
-                <input type="text" placeholder="driver@team.com" className="w-full bg-[#121212] border border-gray-800 text-white rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-[#E10600]" required />
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Username</label>
+                <input 
+                  type="text" 
+                  value={loginUser}
+                  onChange={(e) => setLoginUser(e.target.value)}
+                  placeholder="driver99" 
+                  className="w-full bg-[#121212] border border-gray-800 text-white rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-[#E10600]" 
+                  required 
+                />
               </div>
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Password</label>
-                  <span className="text-[10px] text-[#E10600] cursor-pointer hover:underline">Forgot?</span>
                 </div>
-                <input type="password" placeholder="••••••••" className="w-full bg-[#121212] border border-gray-800 text-white rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-[#E10600]" required />
-              </div>
-              
-              <div className="flex items-center space-x-2 my-4">
-                <input type="checkbox" className="accent-[#E10600] w-4 h-4 bg-[#121212] border-gray-800 rounded-sm" />
-                <label className="text-xs text-gray-400">Remember telemetry session</label>
+                <input 
+                  type="password" 
+                  value={loginPass}
+                  onChange={(e) => setLoginPass(e.target.value)}
+                  placeholder="••••••••" 
+                  className="w-full bg-[#121212] border border-gray-800 text-white rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-[#E10600]" 
+                  required 
+                />
               </div>
 
-              <button type="submit" className="w-full bg-[#E10600] hover:bg-red-700 text-white font-bold py-2.5 rounded-sm flex items-center justify-center transition-colors text-sm tracking-widest uppercase">
-                ➔ ENGAGE
+              <button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full bg-[#E10600] hover:bg-red-700 text-white font-bold py-2.5 rounded-sm flex items-center justify-center transition-colors text-sm tracking-widest uppercase mt-6 disabled:opacity-50"
+              >
+                {isLoading ? 'CONNECTING...' : '➔ ENGAGE'}
               </button>
             </form>
 
-            <div className="flex items-center my-6">
-              <div className="flex-grow border-t border-gray-800"></div>
-              <span className="px-3 text-[10px] text-gray-500 uppercase tracking-widest">Or Connect Via</span>
-              <div className="flex-grow border-t border-gray-800"></div>
-            </div>
-
-            <div className="flex space-x-3 mb-6">
-              <button className="flex-1 bg-[#121212] border border-gray-800 hover:border-gray-600 text-white py-2 rounded-sm text-xs font-semibold flex items-center justify-center transition-colors">
-                 Google
-              </button>
-              <button className="flex-1 bg-[#121212] border border-gray-800 hover:border-gray-600 text-white py-2 rounded-sm text-xs font-semibold flex items-center justify-center transition-colors">
-                 Apple
-              </button>
-            </div>
-
-            <div className="text-center text-[10px] text-gray-500">
+            <div className="text-center text-[10px] text-gray-500 mt-8">
               <p>Protected by PitPage Security.</p>
-              <p>Telemetry data encrypted end-to-end.</p>
               <p className="mt-4">
-                Don't have an account? <span onClick={() => setModalView('register')} className="text-[#E10600] cursor-pointer hover:underline font-bold">Register</span>
+                Don't have an account? <span onClick={() => switchView('register')} className="text-[#E10600] cursor-pointer hover:underline font-bold">Register</span>
               </p>
             </div>
           </div>
         ) : (
           
-          /* Tampilan REGISTER */
+        /* --- TAMPILAN REGISTER --- */
           <div>
             <h2 className="text-2xl font-bold text-white mb-1">Create Account</h2>
             <p className="text-sm text-gray-400 mb-6">Join the paddock for exclusive data and insights.</p>
             
-            <form className="space-y-4">
+            <form onSubmit={handleRegisterSubmit} className="space-y-4">
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Full Name</label>
-                <input type="text" placeholder="Charles Leclerc" className="w-full bg-[#121212] border border-gray-800 text-white rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-[#E10600]" />
+                <input 
+                  type="text" value={regName} onChange={(e) => setRegName(e.target.value)}
+                  placeholder="Charles Leclerc" 
+                  className="w-full bg-[#121212] border border-gray-800 text-white rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-[#E10600]" required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Username</label>
+                <input 
+                  type="text" value={regUser} onChange={(e) => setRegUser(e.target.value)}
+                  placeholder="charles16" 
+                  className="w-full bg-[#121212] border border-gray-800 text-white rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-[#E10600]" required
+                />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Email Address</label>
-                <input type="email" placeholder="driver@team.com" className="w-full bg-[#121212] border border-gray-800 text-white rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-[#E10600]" />
+                <input 
+                  type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)}
+                  placeholder="driver@team.com" 
+                  className="w-full bg-[#121212] border border-gray-800 text-white rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-[#E10600]" required
+                />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Password</label>
-                <input type="password" placeholder="••••••••" className="w-full bg-[#121212] border border-gray-800 text-white rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-[#E10600]" />
+                <input 
+                  type="password" value={regPass} onChange={(e) => setRegPass(e.target.value)}
+                  placeholder="••••••••" 
+                  className="w-full bg-[#121212] border border-gray-800 text-white rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-[#E10600]" required
+                />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Confirm Password</label>
-                <input type="password" placeholder="••••••••" className="w-full bg-[#121212] border border-gray-800 text-white rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-[#E10600]" />
+                <input 
+                  type="password" value={regConfirm} onChange={(e) => setRegConfirm(e.target.value)}
+                  placeholder="••••••••" 
+                  className="w-full bg-[#121212] border border-gray-800 text-white rounded-md px-4 py-2.5 text-sm focus:outline-none focus:border-[#E10600]" required
+                />
               </div>
 
-              <div className="space-y-2 mt-4 mb-6">
-                <div className="flex items-start space-x-2">
-                  <input type="checkbox" className="accent-[#E10600] w-4 h-4 bg-[#121212] border-gray-800 mt-0.5" />
-                  <label className="text-xs text-gray-400">I agree to the <span className="text-[#E10600]">Terms of Service</span> and <span className="text-[#E10600]">Privacy Policy</span></label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <input type="checkbox" className="accent-[#E10600] w-4 h-4 bg-[#121212] border-gray-800 mt-0.5" />
-                  <label className="text-xs text-gray-400">Join the PitPage Newsletter for exclusive updates</label>
-                </div>
-              </div>
-
-              <button type="button" onClick={() => setModalView('login')} className="w-full bg-transparent border border-gray-700 hover:border-gray-500 text-white font-bold py-2.5 rounded-sm flex items-center justify-center transition-colors text-xs tracking-widest uppercase mb-4">
-                CREATE ACCOUNT
+              <button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full bg-transparent border border-gray-700 hover:border-[#E10600] text-white hover:text-[#E10600] font-bold py-2.5 rounded-sm flex items-center justify-center transition-colors text-xs tracking-widest uppercase mt-6 disabled:opacity-50"
+              >
+                {isLoading ? 'PROCESSING...' : 'CREATE ACCOUNT'}
               </button>
             </form>
 
-            <div className="text-center border-t border-gray-800 pt-6 mt-2">
+            <div className="text-center border-t border-gray-800 pt-6 mt-4">
               <p className="text-xs text-gray-400">
-                Already have an account? <span onClick={() => setModalView('login')} className="text-[#E10600] cursor-pointer hover:underline font-bold">Login</span>
+                Already have an account? <span onClick={() => switchView('login')} className="text-[#E10600] cursor-pointer hover:underline font-bold">Login</span>
               </p>
             </div>
           </div>
