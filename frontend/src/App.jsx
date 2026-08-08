@@ -4,7 +4,11 @@ import Footer from "./components/Footer";
 import AuthModal from "./components/AuthModal";
 import Home from "./pages/Home";
 import Articles from "./pages/Articles";
-import ArticleDetail from "./pages/ArticleDetail"; // <-- Pastikan ini di-import
+import ArticleDetail from "./pages/ArticleDetail";
+import AuthorProfile from "./pages/AuthorProfile";
+import EditProfile from "./pages/EditProfile";
+import WriteArticle from "./pages/WriteArticle";
+import EditArticle from "./pages/EditArticle";
 
 export default function App() {
   return (
@@ -17,8 +21,11 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/articles" element={<Articles />} />
-            {/* PASTIKAN RUTE INI ADA DI DALAM APP.JSX */}
             <Route path="/articles/:slug" element={<ArticleDetail />} />
+            <Route path="/authors/:id" element={<AuthorProfile />} />
+            <Route path="/dashboard/profile" element={<EditProfile />} />
+            <Route path="/dashboard/write" element={<WriteArticle />} />
+            <Route path="/dashboard/edit-article/:slug" element={<EditArticle />} />
           </Routes>
         </div>
 

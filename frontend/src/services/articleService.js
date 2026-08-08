@@ -1,19 +1,19 @@
 import api from './api';
 
 export const articleService = {
-  // 🟢 1. Mengambil Semua Artikel
+  // Mengambil Semua Artikel
   getAllArticles: async () => {
     const response = await api.get('/articles');
     return response.data; 
   },
 
-  // 🟢 2. Mengambil Artikel Terbaru
+  // Mengambil Artikel Terbaru
   getLatestArticles: async (limit = 5) => {
     const response = await api.get(`/articles/latest?limit=${limit}`);
     return response.data;
   },
 
-  // 🟢 3. Mengambil Detail Artikel berdasarkan Slug (DISESUAIKAN DENGAN RUTE ADIS)
+  // Mengambil Detail Artikel 
   getArticleBySlug: async (slug) => {
     // Ditambahkan kata '/slug/' di antara /articles/ dan slug-nya
     const response = await api.get(`/articles/slug/${slug}`);
@@ -32,7 +32,7 @@ export const articleService = {
   },
 
   deleteArticle: async (slug) => {
-    const response = await api.delete(`/articles/${slug}`);
-    return response.data;
+  const response = await api.delete(`/articles/${slug}`);
+  return response.data;
   }
 };
