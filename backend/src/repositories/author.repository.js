@@ -30,7 +30,24 @@ async function findById(id) {
     });
 }
 
+
+
+async function updateAuthor(id, data) {
+    return await prisma.user.update({
+        where: { id: id },
+        data: data,
+    });
+};
+
+async function deleteAuthor(id) {
+    return await prisma.user.delete({
+        where: { id: id },
+    });
+};
+
 module.exports = {
     findAll,
     findById,
+    updateAuthor,
+    deleteAuthor,
 };

@@ -36,6 +36,7 @@ async function findByEmail(email) {
     });
 };
 
+
 module.exports = {
     register,
     login,

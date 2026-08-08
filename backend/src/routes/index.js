@@ -6,6 +6,7 @@ const driverRoutes = require("./driver.routes");
 const categoryRoutes = require("./category.routes");
 const authorRoutes = require("./author.routes");
 const authRoutes = require("./auth.routes");
+const commentRoutes = require("./comment.routes");
 
 
 router.use("/auth", authRoutes);
@@ -13,5 +14,6 @@ router.use("/articles", articleRoutes);
 router.use("/drivers", driverRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/authors", authorRoutes);
+router.use("/comments", commentRoutes);
 
 module.exports = router;

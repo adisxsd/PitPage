@@ -10,7 +10,20 @@ async function getAuthorById(id) {
     return author;
 };
 
+
+async function updateAuthor(id, authorData) {
+    const updatedAuthor = await authorRepository.updateAuthor(Number(id), authorData);
+    return updatedAuthor;
+};
+
+async function deleteAuthor(id) {
+    const deletedAuthor = await authorRepository.deleteAuthor(Number(id));
+    return deletedAuthor;
+};
+
 module.exports = {
     getAllAuthors,
     getAuthorById,
+    updateAuthor,
+    deleteAuthor,
 };
