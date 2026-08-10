@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useAuthStore from '../store/useAuthStore';
 import logo from '../assets/logo.png';
 
@@ -20,6 +20,21 @@ export default function AuthModal() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  // 🟢 FITUR BARU: Otomatis kosongkan form setiap kali modal ditutup
+  useEffect(() => {
+    if (!isModalOpen) {
+      setLoginUser('');
+      setLoginPass('');
+      setRegName('');
+      setRegUser('');
+      setRegEmail('');
+      setRegPass('');
+      setRegConfirm('');
+      setErrorMsg('');
+      setSuccessMsg('');
+    }
+  }, [isModalOpen]);
+
   if (!isModalOpen) return null;
 
   // Fungsi ganti layar
@@ -30,17 +45,18 @@ export default function AuthModal() {
   };
 
   // Eksekusi Login
-  const handleLoginSubmit = async (e) => {
+const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMsg('');
     
     const res = await login(loginUser, loginPass);
-    // Ditambahkan res? agar aman jika res undefined
-    if (!res || !res.success) { 
+    if (res && res.success) {
+      window.location.reload(); 
+    } else { 
       setErrorMsg(res?.message || 'Gagal melakukan login.');
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   // Eksekusi Register
@@ -55,11 +71,13 @@ export default function AuthModal() {
     setErrorMsg('');
     
     const res = await register(regName, regUser, regEmail, regPass);
-    if (res.success) {
-      setSuccessMsg('Akun Paddock berhasil dibuat! Silakan Login.');
+    if (res && res.success) {
+      // 🟢 FITUR BARU: Notif Register Berhasil & Otomatis ke Login
+      alert("🟢 REGISTRASI BERHASIL! Silakan login dengan akun barumu.");
       setRegName(''); setRegUser(''); setRegEmail(''); setRegPass(''); setRegConfirm('');
+      switchView('login'); // Otomatis pindah ke tab login
     } else {
-      setErrorMsg(res.message);
+      setErrorMsg(res?.message || 'Gagal membuat akun.');
     }
     setIsLoading(false);
   };

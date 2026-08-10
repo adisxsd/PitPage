@@ -1,4 +1,4 @@
-import api from './api'; // Memanggil konfigurasi axios yang sudah kita buat
+import api from './api'; // Memanggil konfigurasi axios
 
 export const authService = {
   login: async (username, password) => {
