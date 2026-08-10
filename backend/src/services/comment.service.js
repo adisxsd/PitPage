@@ -43,8 +43,6 @@ async function updateComment(commentId, userId, role, commentData) {
         throw new Error("Comment not found");
     }
 
-    // ADMIN boleh mengedit komentar siapa pun
-    // AUTHOR hanya boleh mengedit komentar sendiri
     if (role !== "ADMIN" && comment.userId !== userId) {
         throw new Error("You can only edit your own comment");
     }
