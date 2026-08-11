@@ -34,7 +34,7 @@ export default function ArticleDetail() {
           try {
             const commentsData = await commentService.getCommentsByArticle(fetchedArticle.id);
             if (Array.isArray(commentsData)) {
-              const sortedComments = commentsData.sort((a, b) => new Date(b.createdAt) - new Date(b.createdAt));
+              const sortedComments = commentsData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
               setComments(sortedComments);
             }
           } catch (commentErr) {
@@ -90,7 +90,7 @@ export default function ArticleDetail() {
   };
 
   const handleDeleteComment = async (commentId) => {
-    const isConfirmed = window.confirm("Hapus komentar ini dari paddock?");
+    const isConfirmed = window.confirm(currentLang === 'id' ? "Hapus komentar ini dari paddock?" : "Delete this comment from the paddock?");
     if (!isConfirmed) return;
 
     try {
@@ -126,7 +126,19 @@ export default function ArticleDetail() {
     );
   }
 
-  if (!article) return null;
+  if (!article) {
+    return (
+      <div className="bg-[#121212] min-h-screen flex flex-col items-center justify-center text-white pb-20">
+        <h1 className="text-6xl font-black text-[#E10600] mb-4">404</h1>
+        <p className="text-gray-400 mb-8 font-medium uppercase tracking-widest text-sm">
+          {currentLang === 'id' ? 'Artikel tidak ditemukan di Paddock.' : 'Article not found in the Paddock.'}
+        </p>
+        <Link to="/articles" className="bg-[#1A1A1A] border border-gray-800 hover:border-gray-600 text-white px-8 py-3 rounded-sm font-bold uppercase tracking-wider text-xs transition-colors shadow-lg">
+          {currentLang === 'id' ? 'Kembali ke Arsip' : 'Back to Archive'}
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#121212] text-white min-h-screen pb-20">
