@@ -173,7 +173,14 @@ async function findLatestArticles(req, res) {
 
 async function createArticle(req, res) {
     try {
-        const article = await articleService.createArticle(req.body);
+        console.log("========== CREATE ARTICLE ==========");
+        console.log("BODY:", req.body);
+        console.log("FILE:", req.file);
+
+        const article = await articleService.createArticle(
+            req.body,
+            req.file
+        );
 
         return res.status(201).json({
             success: true,
@@ -182,8 +189,7 @@ async function createArticle(req, res) {
         });
 
     } catch (error) {
-
-        console.error(error);
+        console.error("Error creating article:", error);
 
         return res.status(500).json({
             success: false,
@@ -200,7 +206,8 @@ async function updateArticle(req, res) {
 
         const article = await articleService.updateArticle(
             slug,
-            req.body
+            req.body,
+            req.file
         );
 
         return res.status(200).json({
