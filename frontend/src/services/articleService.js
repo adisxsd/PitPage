@@ -12,18 +12,17 @@ export const articleService = {
   },
 
   getArticleBySlug: async (slug) => {
-    // Sesuaikan kembali dengan route yang benar di Back-End Adis
-    const response = await api.get(`/articles/${slug}`);
+    const response = await api.get(`/articles/slug/${slug}`);
     return response.data;
   },
 
-  createArticle: async (formData) => {
-    const response = await api.post('/articles', formData); // <-- Biarkan Axios yang atur header boundary-nya
+createArticle: async (formData) => {
+    const response = await api.post('/articles', formData);
     return response.data;
   },
 
   updateArticle: async (slug, formData) => {
-    const response = await api.put(`/articles/${slug}`, formData); // <-- Biarkan Axios yang atur header boundary-nya
+    const response = await api.put(`/articles/${slug}`, formData);
     return response.data;
   },
 

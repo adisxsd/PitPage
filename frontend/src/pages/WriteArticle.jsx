@@ -6,7 +6,7 @@ import {
   FaListUl, FaListOl, FaEye, FaEdit 
 } from 'react-icons/fa';
 import useAuthStore from '../store/useAuthStore';
-import { articleService } from '../services/articleService';
+import { articleService } from '../services/articleService'; // 🟢 Kembali pakai articleService
 import api from '../services/api';
 import { translations } from '../utils/translations';
 
@@ -20,7 +20,7 @@ export default function WriteArticle() {
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
-  const [thumbnailFile, setThumbnailFile] = useState(null); // 🟢 State untuk File Gambar
+  const [thumbnailFile, setThumbnailFile] = useState(null); 
   const [categoryId, setCategoryId] = useState('');
   const [driverId, setDriverId] = useState('');
   const [content, setContent] = useState('');
@@ -90,7 +90,7 @@ export default function WriteArticle() {
     }
 
     try {
-      // 🟢 MENGGUNAKAN FORMDATA KARENA ADA FILE GAMBAR
+      // 🟢 BUNGKUS DENGAN FORMDATA
       const formData = new FormData();
       formData.append('title', title);
       formData.append('slug', slug);
@@ -98,11 +98,14 @@ export default function WriteArticle() {
       formData.append('authorId', user.id);
       formData.append('categoryId', categoryId);
       formData.append('driverId', driverId);
+      formData.append('status', 'PUBLISHED');
+      formData.append('publishedAt', new Date().toISOString());
       
       if (thumbnailFile) {
         formData.append('thumbnail', thumbnailFile);
       }
 
+      // 🟢 TEMBAK MENGGUNAKAN ARTICLESERVICE (Token aman via api.js)
       await articleService.createArticle(formData);
       
       setMsg({ 
