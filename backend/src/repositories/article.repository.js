@@ -120,9 +120,25 @@ async function createArticle(data) {
     return await prisma.article.create({
         data: data,
         include : {
-            author : true,
-            category : true,
-            driver : true,
+            author : {
+                select: {
+                    id: true,
+                    name: true,
+                    username: true,
+                },
+            },
+            category : {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
+            driver : {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
         },
     });
 };

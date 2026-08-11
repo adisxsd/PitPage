@@ -1,23 +1,29 @@
 const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcrypt");
 
 const prisma = new PrismaClient();
 
 async function main() {
-    const user = await prisma.user.create({
+    const adminPassword = await bcrypt.hash("1234", 10);
+
+    await prisma.user.update({
+        where: {
+            username: "admin1",
+        },
         data: {
-            name: "Adis",
-            username: "adis12",
-            email: "adis12@example.com",
-            password: "adis1234",
-            role: "AUTHOR",
+            password: adminPassword
         },
     });
 
-    console.log(user);
+
+
+    console.log("Password admin dan author berhasil di-hash.");
 }
 
 main()
-    .catch(console.error)
+    .catch((error) => {
+        console.error(error);
+    })
     .finally(async () => {
         await prisma.$disconnect();
     });
