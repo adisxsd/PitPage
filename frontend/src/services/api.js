@@ -17,6 +17,12 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
+  // 🟢 FIX: Mencegah Axios merusak file gambar (FormData)
+  // Jika data yang dikirim adalah FormData, hapus paksaan 'application/json'
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type']; 
+  }
+  
   return config;
 }, (error) => {
   return Promise.reject(error);

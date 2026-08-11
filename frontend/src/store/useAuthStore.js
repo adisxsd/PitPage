@@ -11,7 +11,6 @@ const useAuthStore = create((set) => ({
   closeModal: () => set({ isModalOpen: false }),
   setModalView: (view) => set({ modalView: view }),
   
-  // Fungsi Login pintar (Mendukung struktur data bertingkat)
   login: async (username, password) => {
     try {
       const response = await authService.login(username, password);

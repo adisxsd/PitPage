@@ -18,7 +18,8 @@ export default function EditArticle() {
 
   const [title, setTitle] = useState('');
   const [newSlug, setNewSlug] = useState('');
-  const [thumbnail, setThumbnail] = useState('');
+  const [currentThumbnailUrl, setCurrentThumbnailUrl] = useState(''); // 🟢 Thumbnail yang sudah ada
+  const [newThumbnailFile, setNewThumbnailFile] = useState(null); // 🟢 File thumbnail baru
   const [categoryId, setCategoryId] = useState('');
   const [driverId, setDriverId] = useState('');
   const [content, setContent] = useState('');
@@ -52,7 +53,7 @@ export default function EditArticle() {
 
           setTitle(art.title || '');
           setNewSlug(art.slug || '');
-          setThumbnail(art.thumbnail || '');
+          setCurrentThumbnailUrl(art.thumbnail || '');
           setCategoryId(art.category?.id || '');
           setDriverId(art.driver?.id || '');
           setContent(art.content || '');
@@ -95,17 +96,20 @@ export default function EditArticle() {
     setMsg({ type: '', text: '' });
 
     try {
-      const payload = {
-        title,
-        slug: newSlug,
-        content,
-        thumbnail,
-        authorId: user.id,
-        categoryId: parseInt(categoryId),
-        driverId: parseInt(driverId)
-      };
+      // 🟢 MENGGUNAKAN FORMDATA KARENA UPDATE BISA TERMASUK GAMBAR
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('slug', newSlug);
+      formData.append('content', content);
+      formData.append('categoryId', categoryId);
+      formData.append('driverId', driverId);
+      
+      // Jika Author memilih foto baru, kirim. Jika tidak, backend akan pakai yang lama.
+      if (newThumbnailFile) {
+        formData.append('thumbnail', newThumbnailFile);
+      }
 
-      await articleService.updateArticle(slug, payload);
+      await articleService.updateArticle(slug, formData);
       
       setMsg({ type: 'success', text: currentLang === 'id' ? '🟢 Artikel berhasil diperbarui!' : '🟢 Article updated successfully!' });
       
@@ -257,16 +261,24 @@ export default function EditArticle() {
               </div>
             </div>
 
+            {/* 🟢 INPUT FILE (OPSIONAL UNTUK EDIT) */}
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
-                <FaImage className="text-[#E10600]" /> {currentLang === 'id' ? 'URL Thumbnail' : 'Thumbnail Image URL'}
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <FaImage className="text-[#E10600]" /> {currentLang === 'id' ? 'Ubah Thumbnail (Opsional)' : 'Change Thumbnail (Optional)'}
               </label>
+              
+              {currentThumbnailUrl && (
+                <div className="mb-4">
+                  <img src={currentThumbnailUrl} alt="Current" className="h-24 rounded border border-gray-700 object-cover opacity-80" />
+                  <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">{currentLang === 'id' ? 'Thumbnail Saat Ini' : 'Current Thumbnail'}</p>
+                </div>
+              )}
+
               <input 
-                type="text"
-                value={thumbnail}
-                onChange={(e) => setThumbnail(e.target.value)}
-                className="w-full bg-[#121212] border border-gray-700 text-white rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#E10600]"
-                required
+                type="file"
+                accept="image/*"
+                onChange={(e) => setNewThumbnailFile(e.target.files[0])}
+                className="w-full bg-[#121212] border border-gray-700 text-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:border-[#E10600] file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-wider file:bg-[#1A1A1A] file:text-[#E10600] hover:file:bg-[#E10600] hover:file:text-white file:transition-colors file:cursor-pointer"
               />
             </div>
 
@@ -279,14 +291,14 @@ export default function EditArticle() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('edit')}
-                    className={`px-3 py-1 rounded flex items-center gap-1.5 font-semibold ${activeTab === 'edit' ? 'bg-[#E10600] text-white' : 'text-gray-400'}`}
+                    className={`px-3 py-1 rounded flex items-center gap-1.5 font-semibold transition-colors ${activeTab === 'edit' ? 'bg-[#E10600] text-white' : 'text-gray-400 hover:text-white'}`}
                   >
                     <FaEdit /> {currentLang === 'id' ? 'Tulis' : 'Write'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveTab('preview')}
-                    className={`px-3 py-1 rounded flex items-center gap-1.5 font-semibold ${activeTab === 'preview' ? 'bg-[#E10600] text-white' : 'text-gray-400'}`}
+                    className={`px-3 py-1 rounded flex items-center gap-1.5 font-semibold transition-colors ${activeTab === 'preview' ? 'bg-[#E10600] text-white' : 'text-gray-400 hover:text-white'}`}
                   >
                     <FaEye /> {currentLang === 'id' ? 'Pratinjau' : 'Live Preview'}
                   </button>
@@ -296,25 +308,27 @@ export default function EditArticle() {
               {activeTab === 'edit' ? (
                 <div className="border border-gray-700 rounded-md overflow-hidden bg-[#121212]">
                   <div className="bg-[#181818] border-b border-gray-800 p-2 flex flex-wrap items-center gap-1 text-xs">
-                    <button type="button" onClick={() => insertFormatting('<b>', '</b>')} className="p-2 hover:bg-gray-800 rounded text-white"><FaBold /></button>
-                    <button type="button" onClick={() => insertFormatting('<i>', '</i>')} className="p-2 hover:bg-gray-800 rounded text-white"><FaItalic /></button>
+                    <button type="button" onClick={() => insertFormatting('<b>', '</b>')} className="p-2 hover:bg-gray-800 rounded text-gray-300 hover:text-white" title="Bold"><FaBold /></button>
+                    <button type="button" onClick={() => insertFormatting('<i>', '</i>')} className="p-2 hover:bg-gray-800 rounded text-gray-300 hover:text-white" title="Italic"><FaItalic /></button>
                     <span className="w-px h-4 bg-gray-700 mx-1"></span>
-                    <button type="button" onClick={() => insertFormatting('<h2 class="text-2xl font-bold text-white mt-6 mb-3 border-l-4 border-[#E10600] pl-3 uppercase">', '</h2>')} className="p-2 hover:bg-gray-800 rounded font-bold text-white">H2</button>
-                    <button type="button" onClick={() => insertFormatting('<h3 class="text-xl font-bold text-white mt-4 mb-2 border-b border-gray-800 pb-1">', '</h3>')} className="p-2 hover:bg-gray-800 rounded font-bold text-white">H3</button>
+                    <button type="button" onClick={() => insertFormatting('<h2 class="text-2xl font-bold text-white mt-6 mb-3 border-l-4 border-[#E10600] pl-3 uppercase">', '</h2>')} className="p-2 hover:bg-gray-800 rounded font-bold text-gray-300 hover:text-white" title="H2">H2</button>
+                    <button type="button" onClick={() => insertFormatting('<h3 class="text-xl font-bold text-white mt-4 mb-2 border-b border-gray-800 pb-1">', '</h3>')} className="p-2 hover:bg-gray-800 rounded font-bold text-gray-300 hover:text-white" title="H3">H3</button>
                     <span className="w-px h-4 bg-gray-700 mx-1"></span>
-                    <button type="button" onClick={() => insertFormatting('<blockquote class="border-l-4 border-[#E10600] pl-6 py-3 my-6 italic text-white font-semibold text-lg bg-[#181818]">"', '"</blockquote>')} className="p-2 hover:bg-[#E10600]/20 rounded text-[#E10600] font-bold flex items-center gap-1"><FaQuoteLeft /> Quote F1</button>
+                    <button type="button" onClick={() => insertFormatting('<blockquote class="border-l-4 border-[#E10600] pl-6 py-3 my-6 italic text-white font-semibold text-lg md:text-xl bg-[#181818] rounded-r-md">"', '"</blockquote>')} className="p-2 hover:bg-[#E10600]/20 rounded text-[#E10600] font-bold flex items-center gap-1" title="Quote F1"><FaQuoteLeft /> Quote F1</button>
+                    <span className="w-px h-4 bg-gray-700 mx-1"></span>
+                    <button type="button" onClick={() => insertFormatting('<ul class="list-disc pl-6 space-y-2 my-4">\n  <li>', '</li>\n</ul>')} className="p-2 hover:bg-gray-800 rounded text-gray-300 hover:text-white" title="Bullet List"><FaListUl /></button>
+                    <button type="button" onClick={() => insertFormatting('<ol class="list-decimal pl-6 space-y-2 my-4">\n  <li>', '</li>\n</ol>')} className="p-2 hover:bg-gray-800 rounded text-gray-300 hover:text-white" title="Numbered List"><FaListOl /></button>
                   </div>
                   <textarea 
                     id="article-content-textarea"
                     rows="12"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    className="w-full bg-[#121212] text-white p-4 text-sm focus:outline-none font-mono"
+                    className="w-full bg-[#121212] text-white p-4 text-sm focus:outline-none custom-scrollbar leading-relaxed font-mono whitespace-pre-line"
                     required
                   ></textarea>
                 </div>
               ) : (
-                /* 🟢 LIVE PREVIEW DENGAN WHITESPACE-PRE-LINE AGAR SPASI/ENTER BERFUNGSI */
                 <div className="border border-gray-700 rounded-md p-6 bg-[#121212] min-h-[300px]">
                   {content ? (
                     <div 

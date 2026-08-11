@@ -6,18 +6,21 @@ import {
   FaListUl, FaListOl, FaEye, FaEdit 
 } from 'react-icons/fa';
 import useAuthStore from '../store/useAuthStore';
-import { articleService } from '../services/articleService';
+import { articleService } from '../services/articleService'; // 🟢 Kembali pakai articleService
 import api from '../services/api';
+import { translations } from '../utils/translations';
 
 export default function WriteArticle() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated } = useAuthStore();
   const currentLang = localStorage.getItem('pitpage_lang') || 'en';
+  
+  const t = translations[currentLang]?.dashboard || translations.en.dashboard;
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
-  const [thumbnail, setThumbnail] = useState('');
+  const [thumbnailFile, setThumbnailFile] = useState(null); 
   const [categoryId, setCategoryId] = useState('');
   const [driverId, setDriverId] = useState('');
   const [content, setContent] = useState('');
@@ -87,18 +90,23 @@ export default function WriteArticle() {
     }
 
     try {
-      const payload = {
-        title,
-        slug,
-        content,
-        thumbnail,
-        status: "PUBLISHED",
-        authorId: user.id,
-        categoryId: parseInt(categoryId),
-        driverId: parseInt(driverId)
-      };
+      // 🟢 BUNGKUS DENGAN FORMDATA
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('slug', slug);
+      formData.append('content', content);
+      formData.append('authorId', user.id);
+      formData.append('categoryId', categoryId);
+      formData.append('driverId', driverId);
+      formData.append('status', 'PUBLISHED');
+      formData.append('publishedAt', new Date().toISOString());
+      
+      if (thumbnailFile) {
+        formData.append('thumbnail', thumbnailFile);
+      }
 
-      await articleService.createArticle(payload);
+      // 🟢 TEMBAK MENGGUNAKAN ARTICLESERVICE (Token aman via api.js)
+      await articleService.createArticle(formData);
       
       setMsg({ 
         type: 'success', 
@@ -141,8 +149,8 @@ export default function WriteArticle() {
       
       <aside className="w-full md:w-64 bg-[#181818] border-b md:border-b-0 md:border-r border-gray-800 flex flex-col shrink-0">
         <div className="p-6 border-b border-gray-800 hidden md:block">
-          <h2 className="text-lg font-black text-white tracking-widest uppercase">CMS Panel</h2>
-          <p className="text-xs text-[#E10600] mt-1 font-bold">Author Dashboard</p>
+          <h2 className="text-lg font-black text-white tracking-widest uppercase">{t.panel_title}</h2>
+          <p className="text-xs text-[#E10600] mt-1 font-bold">{t.role}</p>
         </div>
         <nav className="flex md:flex-col gap-2 p-4 overflow-x-auto md:overflow-x-visible scrollbar-hide">
           <SidebarItem to="/dashboard/write" icon={FaPenNib} label={currentLang === 'id' ? 'Tulis Artikel' : 'Write Article'} />
@@ -178,7 +186,7 @@ export default function WriteArticle() {
                   type="text"
                   value={title}
                   onChange={handleTitleChange}
-                  placeholder="Contoh: Red Bull's Dominance: A Technical Analysis"
+                  placeholder="Contoh: Red Bull's Dominance"
                   className="w-full bg-[#121212] border border-gray-700 text-white rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#E10600] transition-colors"
                   required
                 />
@@ -191,7 +199,7 @@ export default function WriteArticle() {
                   type="text"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value.toLowerCase())}
-                  placeholder="red-bull-dominance-technical-analysis"
+                  placeholder="red-bull-dominance"
                   className="w-full bg-[#121212] border border-gray-700 text-gray-400 rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#E10600] transition-colors"
                   required
                 />
@@ -233,42 +241,37 @@ export default function WriteArticle() {
               </div>
             </div>
 
+            {/* 🟢 INPUT FILE UNTUK UPLOAD THUMBNAIL */}
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
-                <FaImage className="text-[#E10600]" /> {currentLang === 'id' ? 'URL Thumbnail' : 'Thumbnail Image URL'}
+                <FaImage className="text-[#E10600]" /> {currentLang === 'id' ? 'Upload Thumbnail' : 'Upload Thumbnail'}
               </label>
               <input 
-                type="text"
-                value={thumbnail}
-                onChange={(e) => setThumbnail(e.target.value)}
-                placeholder="https://images.unsplash.com/photo-..."
-                className="w-full bg-[#121212] border border-gray-700 text-white rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#E10600] transition-colors"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setThumbnailFile(e.target.files[0])}
+                className="w-full bg-[#121212] border border-gray-700 text-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:border-[#E10600] file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-wider file:bg-[#1A1A1A] file:text-[#E10600] hover:file:bg-[#E10600] hover:file:text-white file:transition-colors file:cursor-pointer"
                 required
               />
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                   {currentLang === 'id' ? 'Editor Konten Artikel' : 'Article Content Editor'}
                 </label>
-                
                 <div className="flex bg-[#121212] border border-gray-800 rounded p-1 text-xs">
                   <button
                     type="button"
                     onClick={() => setActiveTab('edit')}
-                    className={`px-3 py-1 rounded flex items-center gap-1.5 font-semibold transition-colors ${
-                      activeTab === 'edit' ? 'bg-[#E10600] text-white' : 'text-gray-400 hover:text-white'
-                    }`}
+                    className={`px-3 py-1 rounded flex items-center gap-1.5 font-semibold transition-colors ${activeTab === 'edit' ? 'bg-[#E10600] text-white' : 'text-gray-400 hover:text-white'}`}
                   >
                     <FaEdit /> {currentLang === 'id' ? 'Tulis' : 'Write'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveTab('preview')}
-                    className={`px-3 py-1 rounded flex items-center gap-1.5 font-semibold transition-colors ${
-                      activeTab === 'preview' ? 'bg-[#E10600] text-white' : 'text-gray-400 hover:text-white'
-                    }`}
+                    className={`px-3 py-1 rounded flex items-center gap-1.5 font-semibold transition-colors ${activeTab === 'preview' ? 'bg-[#E10600] text-white' : 'text-gray-400 hover:text-white'}`}
                   >
                     <FaEye /> {currentLang === 'id' ? 'Pratinjau' : 'Live Preview'}
                   </button>
@@ -289,14 +292,12 @@ export default function WriteArticle() {
                     <button type="button" onClick={() => insertFormatting('<ul class="list-disc pl-6 space-y-2 my-4">\n  <li>', '</li>\n</ul>')} className="p-2 hover:bg-gray-800 rounded text-gray-300 hover:text-white" title="Bullet List"><FaListUl /></button>
                     <button type="button" onClick={() => insertFormatting('<ol class="list-decimal pl-6 space-y-2 my-4">\n  <li>', '</li>\n</ol>')} className="p-2 hover:bg-gray-800 rounded text-gray-300 hover:text-white" title="Numbered List"><FaListOl /></button>
                   </div>
-
                   <textarea 
                     id="article-content-textarea"
                     rows="12"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder={currentLang === 'id' ? 'Tuliskan analisis balapan di sini...' : 'Write your race analysis here...'}
-                    className="w-full bg-[#121212] text-white p-4 text-sm focus:outline-none custom-scrollbar leading-relaxed font-mono"
+                    className="w-full bg-[#121212] text-white p-4 text-sm focus:outline-none custom-scrollbar leading-relaxed font-mono whitespace-pre-line"
                     required
                   ></textarea>
                 </div>
@@ -322,7 +323,7 @@ export default function WriteArticle() {
                 disabled={isLoading}
                 className="bg-[#E10600] hover:bg-red-700 text-white font-bold py-3 px-8 rounded-sm text-xs tracking-widest uppercase flex items-center gap-2 transition-all disabled:opacity-50 shadow-lg"
               >
-                <FaSave /> {isLoading ? (currentLang === 'id' ? 'MENERBITKAN...' : 'PUBLISHING...') : (currentLang === 'id' ? 'TERBITKAN ARTIKEL' : 'PUBLISH ARTICLE')}
+                <FaSave /> {isLoading ? '...' : (currentLang === 'id' ? 'TERBITKAN ARTIKEL' : 'PUBLISH ARTICLE')}
               </button>
             </div>
 
