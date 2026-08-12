@@ -366,12 +366,9 @@ const handleSubmit = async (e, articleStatus) => {
                     : 'PUBLISH ARTICLE'
                 }
               </button>
-
             </div>
-
           </form>
         </div>
-
       </main>
     </div>
   );
