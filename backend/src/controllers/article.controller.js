@@ -173,10 +173,6 @@ async function findLatestArticles(req, res) {
 
 async function createArticle(req, res) {
     try {
-        console.log("========== CREATE ARTICLE ==========");
-        console.log("BODY:", req.body);
-        console.log("FILE:", req.file);
-
         const article = await articleService.createArticle(
             req.body,
             req.file

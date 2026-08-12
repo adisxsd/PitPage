@@ -78,54 +78,70 @@ export default function WriteArticle() {
     }, 50);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setMsg({ type: '', text: '' });
+const handleSubmit = async (e, articleStatus) => {
+  e.preventDefault();
 
-    if (!categoryId || !driverId) {
-      setMsg({ type: 'error', text: currentLang === 'id' ? 'Kategori dan Driver wajib dipilih!' : 'Category and Driver are required!' });
-      setIsLoading(false);
-      return;
+  setIsLoading(true);
+  setMsg({ type: '', text: '' });
+
+  if (!categoryId || !driverId) {
+    setMsg({
+      type: 'error',
+      text: currentLang === 'id'
+        ? 'Kategori dan Driver wajib dipilih!'
+        : 'Category and Driver are required!'
+    });
+
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+
+    formData.append('title', title);
+    formData.append('slug', slug);
+    formData.append('content', content);
+    formData.append('authorId', user.id);
+    formData.append('categoryId', categoryId);
+    formData.append('driverId', driverId);
+
+    // Status ditentukan dari button yang diklik
+    formData.append('status', articleStatus);
+
+    if (thumbnailFile) {
+      formData.append('thumbnail', thumbnailFile);
     }
 
-    try {
-      // 🟢 BUNGKUS DENGAN FORMDATA
-      const formData = new FormData();
-      formData.append('title', title);
-      formData.append('slug', slug);
-      formData.append('content', content);
-      formData.append('authorId', user.id);
-      formData.append('categoryId', categoryId);
-      formData.append('driverId', driverId);
-      formData.append('status', 'PUBLISHED');
-      formData.append('publishedAt', new Date().toISOString());
-      
-      if (thumbnailFile) {
-        formData.append('thumbnail', thumbnailFile);
-      }
+    await articleService.createArticle(formData);
 
-      // 🟢 TEMBAK MENGGUNAKAN ARTICLESERVICE (Token aman via api.js)
-      await articleService.createArticle(formData);
-      
-      setMsg({ 
-        type: 'success', 
-        text: currentLang === 'id' ? '🟢 Artikel berhasil dipublikasikan ke Paddock!' : '🟢 Article published successfully!' 
-      });
-      
-      setTimeout(() => {
-        navigate('/dashboard/profile');
-      }, 1500);
+    setMsg({
+      type: 'success',
+      text:
+        articleStatus === 'DRAFT'
+          ? currentLang === 'id'
+            ? '📝 Artikel berhasil disimpan sebagai draft!'
+            : '📝 Article saved as draft!'
+          : currentLang === 'id'
+            ? '🟢 Artikel berhasil dipublikasikan ke Paddock!'
+            : '🟢 Article published successfully!'
+    });
 
-    } catch (error) {
-      setMsg({ 
-        type: 'error', 
-        text: error.response?.data?.message || 'Gagal mempublikasikan artikel.' 
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    setTimeout(() => {
+      navigate('/dashboard/profile');
+    }, 1500);
+
+  } catch (error) {
+    setMsg({
+      type: 'error',
+      text:
+        error.response?.data?.message ||
+        'Gagal menyimpan artikel.'
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const SidebarItem = ({ to, icon: Icon, label }) => {
     const isActive = location.pathname === to;
@@ -317,14 +333,40 @@ export default function WriteArticle() {
               )}
             </div>
 
-            <div className="pt-4 flex justify-end border-t border-gray-800">
+            <div className="pt-4 flex flex-col sm:flex-row justify-end gap-3 border-t border-gray-800">
+
+              {/* SAVE AS DRAFT */}
               <button
-                type="submit"
+                type="button"
                 disabled={isLoading}
-                className="bg-[#E10600] hover:bg-red-700 text-white font-bold py-3 px-8 rounded-sm text-xs tracking-widest uppercase flex items-center gap-2 transition-all disabled:opacity-50 shadow-lg"
+                onClick={(e) => handleSubmit(e, 'DRAFT')}
+                className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-sm text-xs tracking-widest uppercase flex items-center justify-center gap-2 transition-all disabled:opacity-50"
               >
-                <FaSave /> {isLoading ? '...' : (currentLang === 'id' ? 'TERBITKAN ARTIKEL' : 'PUBLISH ARTICLE')}
+                <FaSave />
+                {isLoading
+                  ? '...'
+                  : currentLang === 'id'
+                    ? 'SIMPAN SEBAGAI DRAFT'
+                    : 'SAVE AS DRAFT'
+                }
               </button>
+
+              {/* PUBLISH */}
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={(e) => handleSubmit(e, 'PUBLISHED')}
+                className="bg-[#E10600] hover:bg-red-700 text-white font-bold py-3 px-8 rounded-sm text-xs tracking-widest uppercase flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg"
+              >
+                <FaSave />
+                {isLoading
+                  ? '...'
+                  : currentLang === 'id'
+                    ? 'TERBITKAN ARTIKEL'
+                    : 'PUBLISH ARTICLE'
+                }
+              </button>
+
             </div>
 
           </form>

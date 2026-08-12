@@ -80,6 +80,7 @@ async function createArticle(data, file) {
         authorId: Number(data.authorId),
         categoryId: Number(data.categoryId),
         driverId: Number(data.driverId),
+        status: data.status || "DRAFT",
     });
 
     return article;
