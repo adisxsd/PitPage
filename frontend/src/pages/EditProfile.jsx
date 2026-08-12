@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { 
   FaUser, FaEnvelope, FaIdBadge, FaShieldAlt, FaSave, 
-  FaExternalLinkAlt, FaNewspaper, FaPenNib, FaUserCog, FaPlus 
+  FaExternalLinkAlt, FaNewspaper, FaPenNib, FaUserCog, FaPlus,
+  FaChartBar, FaTags, FaCar
 } from 'react-icons/fa';
 import useAuthStore from '../store/useAuthStore';
 import { authorService } from '../services/authorService';
@@ -11,7 +12,7 @@ import { translations } from '../utils/translations';
 
 export default function EditProfile() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const location = useLocation(); 
   const { user, isAuthenticated } = useAuthStore();
 
   const currentLang = localStorage.getItem('pitpage_lang') || 'en';
@@ -23,6 +24,9 @@ export default function EditProfile() {
 
   const [myArticles, setMyArticles] = useState([]);
   const [isArticlesLoading, setIsArticlesLoading] = useState(true);
+
+  // 🟢 STATE BARU UNTUK TAB AKTIF (PUBLISHED atau DRAFT)
+  const [activeArticleTab, setActiveArticleTab] = useState('PUBLISHED');
 
   const [isLoading, setIsLoading] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
@@ -43,7 +47,6 @@ export default function EditProfile() {
         setIsArticlesLoading(true);
         const articlesRes = await authorService.getArticlesByAuthor(user.id);
         
-        // 🟢 PENGECEKAN RESPON API YANG LEBIH FLEKSIBEL (SUPAYA ARTIKEL PASTI KEBACA)
         if (Array.isArray(articlesRes)) {
           setMyArticles(articlesRes);
         } else if (articlesRes?.success && Array.isArray(articlesRes.data)) {
@@ -95,7 +98,6 @@ export default function EditProfile() {
     }
   };
 
-  // 🟢 Fungsi Menghapus Artikel Milik Sendiri (DELETE /articles/:slug)
   const handleDeleteArticle = async (articleSlug) => {
     const confirmDelete = window.confirm(
       currentLang === 'id' ? 'Apakah Anda yakin ingin menghapus artikel ini dari Paddock?' : 'Are you sure you want to delete this article from Paddock?'
@@ -123,42 +125,49 @@ export default function EditProfile() {
     return new Date(dateString).toLocaleDateString(currentLang === 'id' ? 'id-ID' : 'en-US', options);
   };
 
-  const SidebarItem = ({ to, icon: Icon, label }) => {
-    const isActive = location.pathname === to;
-    return (
-      <Link 
-        to={to} 
-        className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors text-sm font-bold uppercase tracking-wider ${
-          isActive 
-            ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' 
-            : 'text-gray-400 hover:text-white hover:bg-gray-800'
-        }`}
-      >
-        <Icon className={isActive ? 'text-[#E10600] text-lg' : 'text-lg'} /> 
-        <span className="hidden md:block">{label}</span>
-      </Link>
-    );
-  };
+  // 🟢 LOGIKA FILTER ARTIKEL BERDASARKAN STATUS
+  // Jika status kosong (null), kita anggap sebagai PUBLISHED agar artikel lama tetap muncul.
+  const publishedArticles = myArticles.filter(art => art.status === 'PUBLISHED' || !art.status);
+  const draftArticles = myArticles.filter(art => art.status === 'DRAFT');
+  
+  // Artikel yang sedang ditampilkan di layar berdasarkan tab yang diklik
+  const displayedArticles = activeArticleTab === 'PUBLISHED' ? publishedArticles : draftArticles;
 
   return (
     <div className="bg-[#121212] text-white min-h-screen flex flex-col md:flex-row max-w-[1400px] mx-auto border-x border-gray-900/50">
       
-      {/* SIDEBAR CMS MENU */}
+      {/* 🟢 SIDEBAR UNIVERSAL */}
       <aside className="w-full md:w-64 bg-[#181818] border-b md:border-b-0 md:border-r border-gray-800 flex flex-col shrink-0">
-        <div className="p-6 border-b border-gray-800 hidden md:block">
-          <h2 className="text-lg font-black text-white tracking-widest uppercase">{t.panel_title}</h2>
-          <p className="text-xs text-[#E10600] mt-1 font-bold">{t.role}</p>
-        </div>
-        
-        <nav className="flex md:flex-col gap-2 p-4 overflow-x-auto md:overflow-x-visible scrollbar-hide">
-          <SidebarItem to="/dashboard/write" icon={FaPenNib} label={t.write_article} />
-          <SidebarItem to="/dashboard/profile" icon={FaUserCog} label={t.edit_profile} />
+        <nav className="flex md:flex-col gap-1 p-4 md:pt-8 overflow-x-auto md:overflow-x-visible scrollbar-hide text-xs font-bold uppercase tracking-wider">
+          
+          {user?.role === 'ADMIN' && (
+            <>
+              <Link to="/dashboard/admin" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/admin' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+                <FaChartBar className={location.pathname === '/dashboard/admin' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Ringkasan' : 'Overview'}
+              </Link>
+              <Link to="/dashboard/admin/categories" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/admin/categories' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+                <FaTags className={location.pathname === '/dashboard/admin/categories' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Kategori' : 'Categories'}
+              </Link>
+              <Link to="/dashboard/admin/drivers" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/admin/drivers' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+                <FaCar className={location.pathname === '/dashboard/admin/drivers' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Pembalap' : 'Drivers'}
+              </Link>
+              <div className="my-2 border-t border-gray-800/80 hidden md:block"></div>
+            </>
+          )}
+
+          <Link to="/dashboard/write" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/write' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+            <FaPenNib className={location.pathname === '/dashboard/write' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Tulis Artikel' : 'Write Article'}
+          </Link>
+          <Link to="/dashboard/profile" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/profile' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+            <FaUserCog className={location.pathname === '/dashboard/profile' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Profil' : 'Profile'}
+          </Link>
+
         </nav>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
-      <main className="flex-1 p-6 md:p-12 w-full max-w-4xl space-y-12">
+      <main className="flex-1 p-6 md:p-10 w-full space-y-12">
         
+        {/* HEADER AREA */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-gray-800 pb-6">
           <div className="border-l-4 border-[#E10600] pl-4">
             <h1 className="text-2xl md:text-3xl font-extrabold uppercase tracking-tight">{t.edit_profile}</h1>
@@ -192,7 +201,6 @@ export default function EditProfile() {
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
                 <FaUser className="text-[#E10600]" /> {currentLang === 'id' ? 'Nama Lengkap' : 'Full Name'}
@@ -248,15 +256,14 @@ export default function EditProfile() {
                 <FaSave /> {isLoading ? (currentLang === 'id' ? 'MEMPERBARUI...' : 'UPDATING...') : t.save_changes}
               </button>
             </div>
-
           </form>
         </section>
 
-        {/* 2. CONTAINER MY ARTICLES DENGAN TOMBOL VIEW, EDIT, & DELETE */}
+        {/* 2. CONTAINER MY ARTICLES DENGAN TAB PUBLISHED / DRAFT */}
         <section className="bg-[#1A1A1A] border border-gray-800 rounded-lg p-6 md:p-8 shadow-2xl">
-          <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-3">
+          <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-bold uppercase tracking-wider text-white flex items-center gap-2">
-              <FaNewspaper className="text-[#E10600]" /> {t.my_articles} ({myArticles.length})
+              <FaNewspaper className="text-[#E10600]" /> {t.my_articles}
             </h2>
             <Link 
               to="/dashboard/write"
@@ -266,14 +273,42 @@ export default function EditProfile() {
             </Link>
           </div>
 
+          {/* 🟢 TABS NAVIGATOR (PUBLISHED / DRAFT) */}
+          <div className="flex gap-6 border-b border-gray-800 mb-6">
+            <button
+              onClick={() => setActiveArticleTab('PUBLISHED')}
+              className={`pb-3 text-xs font-bold uppercase tracking-wider transition-colors ${
+                activeArticleTab === 'PUBLISHED'
+                  ? 'text-[#E10600] border-b-2 border-[#E10600]'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              {currentLang === 'id' ? 'Terbit' : 'Published'} ({publishedArticles.length})
+            </button>
+            <button
+              onClick={() => setActiveArticleTab('DRAFT')}
+              className={`pb-3 text-xs font-bold uppercase tracking-wider transition-colors ${
+                activeArticleTab === 'DRAFT'
+                  ? 'text-[#E10600] border-b-2 border-[#E10600]'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              {currentLang === 'id' ? 'Draf' : 'Drafts'} ({draftArticles.length})
+            </button>
+          </div>
+
+          {/* MENAMPILKAN DATA BERDASARKAN TAB YANG DIPILIH */}
           {isArticlesLoading ? (
             <div className="text-center py-10 text-xs text-gray-500 uppercase tracking-widest">
               {currentLang === 'id' ? 'Memuat daftar artikel Anda...' : 'Loading your articles...'}
             </div>
-          ) : myArticles.length === 0 ? (
+          ) : displayedArticles.length === 0 ? (
             <div className="text-center py-12 px-4 border border-dashed border-gray-800 rounded-md bg-[#121212]">
               <p className="text-gray-400 font-medium text-sm mb-3">
-                {t.no_articles_yet}
+                {activeArticleTab === 'PUBLISHED'
+                  ? (currentLang === 'id' ? 'Belum ada artikel yang diterbitkan.' : 'No published articles yet.')
+                  : (currentLang === 'id' ? 'Tidak ada draf tersimpan.' : 'No saved drafts found.')
+                }
               </p>
               <Link 
                 to="/dashboard/write"
@@ -284,37 +319,48 @@ export default function EditProfile() {
             </div>
           ) : (
             <div className="space-y-4">
-              {myArticles.map((art) => (
+              {displayedArticles.map((art) => (
                 <div 
                   key={art.id} 
                   className="bg-[#121212] border border-gray-800/80 hover:border-gray-700 p-4 rounded-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-colors"
                 >
                   <div className="flex gap-4 items-center">
-                    <div className="w-16 h-12 bg-gray-800 rounded overflow-hidden flex-shrink-0">
+                    <div className="w-16 h-12 bg-gray-800 rounded overflow-hidden flex-shrink-0 relative">
                       <img 
                         src={art.thumbnail?.startsWith('http') ? art.thumbnail : "https://images.unsplash.com/photo-1541252260730-0412e8e2108e?q=80&w=300&auto=format&fit=crop"} 
                         alt={art.title} 
-                        className="w-full h-full object-cover"
+                        className={`w-full h-full object-cover ${art.status === 'DRAFT' ? 'opacity-50 grayscale' : ''}`}
                       />
+                      {/* Tanda kecil kalau gambarnya Draf */}
+                      {art.status === 'DRAFT' && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[8px] font-bold text-gray-300 uppercase tracking-widest">
+                          DRAFT
+                        </div>
+                      )}
                     </div>
                     <div>
                       <h4 className="font-bold text-sm text-white line-clamp-1 hover:text-[#E10600] transition-colors">
-                        <Link to={`/articles/${art.slug}`}>{art.title}</Link>
+                        <Link to={art.status === 'DRAFT' ? `/dashboard/edit-article/${art.slug}` : `/articles/${art.slug}`}>
+                          {art.title}
+                        </Link>
                       </h4>
                       <p className="text-[11px] text-gray-500 mt-0.5">
-                        {art.category?.name || "News"} • {currentLang === 'id' ? 'Dipublikasikan' : 'Published'} {formatDate(art.publishedAt)}
+                        {art.category?.name || "News"} • {art.status === 'DRAFT' ? (currentLang === 'id' ? 'Disimpan ' : 'Saved ') : (currentLang === 'id' ? 'Dipublikasikan ' : 'Published ')} {formatDate(art.createdAt || art.publishedAt)}
                       </p>
                     </div>
                   </div>
 
-                  {/* 🟢 TOMBOL AKSI: VIEW, EDIT, & DELETE */}
+                  {/* TOMBOL AKSI */}
                   <div className="flex items-center gap-2 self-end sm:self-center">
-                    <Link 
-                      to={`/articles/${art.slug}`} 
-                      className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold px-3 py-1.5 rounded transition-colors"
-                    >
-                      {currentLang === 'id' ? 'Lihat' : 'View'}
-                    </Link>
+                    {/* Tombol Lihat hanya muncul jika sudah dipublish */}
+                    {art.status !== 'DRAFT' && (
+                      <Link 
+                        to={`/articles/${art.slug}`} 
+                        className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold px-3 py-1.5 rounded transition-colors"
+                      >
+                        {currentLang === 'id' ? 'Lihat' : 'View'}
+                      </Link>
+                    )}
 
                     <Link 
                       to={`/dashboard/edit-article/${art.slug}`} 
@@ -324,7 +370,7 @@ export default function EditProfile() {
                     </Link>
 
                     <button 
-                        onClick={() => handleDeleteArticle(art.slug)} // 🟢 Pastikan menggunakan art.slug, bukan art.id
+                        onClick={() => handleDeleteArticle(art.slug)}
                         className="text-xs bg-red-600/20 border border-red-500/40 hover:bg-red-600 text-red-400 hover:text-white font-semibold px-3 py-1.5 rounded transition-colors"
                         >
                         {currentLang === 'id' ? 'Hapus' : 'Delete'}

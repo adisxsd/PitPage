@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/useAuthStore';
 import { articleService } from '../services/articleService';
+import { categoryService } from '../services/categoryService'; // 🟢 TAMBAHAN IMPORT
 import { translations } from '../utils/translations';
 
 export default function Home() {
@@ -12,35 +13,61 @@ export default function Home() {
   const t = translations[currentLang]?.home || translations.en.home;
 
   const [articles, setArticles] = useState([]);
+  const [filteredArticles, setFilteredArticles] = useState([]);
+  const [categories, setCategories] = useState([]); // 🟢 KATEGORI DINAMIS
+  const [activeCategory, setActiveCategory] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchLatestArticles = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await articleService.getLatestArticles(4);
-        
-        console.log("RESPONSE GET LATEST ARTICLES (HOME):", response);
+        // Kita ambil semua artikel agar filter bisa bekerja dengan baik di halaman depan
+        const [artRes, catRes] = await Promise.all([
+          articleService.getAllArticles(),
+          categoryService.getAllCategories().catch(() => null)
+        ]);
 
-        if (response.success && Array.isArray(response.data)) {
-          setArticles(response.data);
-        } else if (Array.isArray(response)) {
-          setArticles(response);
-        } else if (response?.data && Array.isArray(response.data)) {
-          setArticles(response.data);
+        let loadedArticles = [];
+        if (artRes.success && Array.isArray(artRes.data)) {
+          loadedArticles = artRes.data.sort((a, b) => {
+            const dateA = new Date(a.publishedAt || a.createdAt);
+            const dateB = new Date(b.publishedAt || b.createdAt);
+            return dateB - dateA;
+          });
+          setArticles(loadedArticles);
+          setFilteredArticles(loadedArticles);
+        }
+
+        // Set Kategori Dinamis
+        if (catRes && catRes.success && Array.isArray(catRes.data)) {
+          setCategories(catRes.data);
         } else {
-          setArticles([]);
+          const uniqueCats = Array.from(new Set(loadedArticles.map(a => a.category?.name).filter(Boolean)));
+          setCategories(uniqueCats.map((name, idx) => ({ id: `fallback-${idx}`, name })));
         }
 
       } catch (error) {
-        console.error("Gagal mengambil artikel:", error);
+        console.error("Gagal mengambil data Home:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchLatestArticles();
+    fetchData();
   }, []);
+
+  const handleFilterCategory = (categoryName) => {
+    setActiveCategory(categoryName);
+    if (categoryName === 'All') {
+      setFilteredArticles(articles);
+    } else {
+      const filtered = articles.filter(
+        (art) => art.category?.name?.toLowerCase() === categoryName.toLowerCase()
+      );
+      setFilteredArticles(filtered);
+    }
+  };
 
   const handleReadArticle = (slug) => {
     if (slug) navigate(`/articles/${slug}`);
@@ -52,16 +79,16 @@ export default function Home() {
     return new Date(dateString).toLocaleDateString(currentLang === 'id' ? 'id-ID' : 'en-US', options);
   };
 
-  // 🟢 Fungsi untuk membersihkan tag HTML (seperti <h2>, <p>, dll) dari cuplikan teks beranda
   const stripHtmlTags = (html) => {
     if (!html) return '';
     return html.replace(/<\/?[^>]+(>|$)/g, "");
   };
 
-  const heroArticle = articles[0];
-  const mainArticle = articles[1];
-  const sideArticle1 = articles[2];
-  const sideArticle2 = articles[3];
+  // 🟢 HANYA AMBIL 4 ARTIKEL TERATAS DARI HASIL FILTER
+  const heroArticle = filteredArticles[0];
+  const mainArticle = filteredArticles[1];
+  const sideArticle1 = filteredArticles[2];
+  const sideArticle2 = filteredArticles[3];
 
   if (isLoading) {
     return (
@@ -118,13 +145,32 @@ export default function Home() {
         </section>
       )}
 
-      {/* 2. CATEGORY TABS */}
+      {/* 2. CATEGORY TABS (DINAMIS) */}
       <section className="px-6 md:px-16 py-6 border-b border-gray-800/50">
         <div className="flex space-x-3 text-xs md:text-sm font-semibold overflow-x-auto pb-2 scrollbar-hide">
-          <button className="bg-[#E10600] text-white px-5 py-2 rounded-full whitespace-nowrap">{t.all_news}</button>
-          <button className="border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white px-5 py-2 rounded-full whitespace-nowrap transition-colors">{t.race_reports}</button>
-          <button className="border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white px-5 py-2 rounded-full whitespace-nowrap transition-colors">{t.tech_talk}</button>
-          <button className="border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white px-5 py-2 rounded-full whitespace-nowrap transition-colors">{t.rumors}</button>
+          <button
+            onClick={() => handleFilterCategory('All')}
+            className={`px-5 py-2 rounded-full whitespace-nowrap transition-colors ${
+              activeCategory === 'All'
+                ? 'bg-[#E10600] text-white font-bold'
+                : 'border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white'
+            }`}
+          >
+            {t.all_news}
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => handleFilterCategory(cat.name)}
+              className={`px-5 py-2 rounded-full whitespace-nowrap transition-colors ${
+                activeCategory === cat.name
+                  ? 'bg-[#E10600] text-white font-bold'
+                  : 'border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white'
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
         </div>
       </section>
 
@@ -132,10 +178,10 @@ export default function Home() {
       <section className="px-6 md:px-16 py-12 max-w-[1400px] mx-auto">
         <h2 className="text-2xl md:text-3xl font-bold mb-8 border-l-4 border-[#E10600] pl-4">{t.latest_heading}</h2>
         
-        {articles.length === 0 ? (
+        {filteredArticles.length === 0 ? (
           <div className="text-center py-20 text-gray-500 border border-dashed border-gray-800 rounded-lg">
             <p className="text-base font-semibold">
-              {currentLang === 'id' ? 'Belum ada artikel terbaru di Paddock.' : 'No latest articles found in the Paddock.'}
+              {currentLang === 'id' ? 'Belum ada artikel di kategori ini.' : 'No articles found in this category.'}
             </p>
           </div>
         ) : (
@@ -177,7 +223,6 @@ export default function Home() {
                   <span className="mx-2 text-gray-700">|</span> 
                   {formatDate(mainArticle.publishedAt || mainArticle.createdAt)}
                 </div>
-
               </div>
             )}
 

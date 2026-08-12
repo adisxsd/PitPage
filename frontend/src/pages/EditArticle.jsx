@@ -2,27 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import { 
   FaPenNib, FaUserCog, FaSave, FaHeading, FaLink, 
-  FaImage, FaTag, FaCar, FaBold, FaItalic, FaQuoteLeft, 
-  FaListUl, FaListOl, FaEye, FaEdit, FaArrowLeft 
+  FaImage, FaTag, FaTags, FaCar, FaBold, FaItalic, FaQuoteLeft, 
+  FaListUl, FaListOl, FaEye, FaEdit, FaChartBar
 } from 'react-icons/fa';
 import useAuthStore from '../store/useAuthStore';
 import { articleService } from '../services/articleService';
 import api from '../services/api';
+import { translations } from '../utils/translations';
 
 export default function EditArticle() {
-  const { slug } = useParams();
+  const { slug: articleSlug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated } = useAuthStore();
   const currentLang = localStorage.getItem('pitpage_lang') || 'en';
+  
+  const t = translations[currentLang]?.dashboard || translations.en.dashboard;
 
   const [title, setTitle] = useState('');
-  const [newSlug, setNewSlug] = useState('');
-  const [currentThumbnailUrl, setCurrentThumbnailUrl] = useState(''); // 🟢 Thumbnail yang sudah ada
-  const [newThumbnailFile, setNewThumbnailFile] = useState(null); // 🟢 File thumbnail baru
+  const [slug, setSlug] = useState('');
+  const [thumbnailFile, setThumbnailFile] = useState(null); 
+  const [existingThumbnail, setExistingThumbnail] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [driverId, setDriverId] = useState('');
   const [content, setContent] = useState('');
+  const [status, setStatus] = useState('DRAFT');
 
   const [activeTab, setActiveTab] = useState('edit');
   const [categories, setCategories] = useState([]);
@@ -38,44 +42,47 @@ export default function EditArticle() {
       return;
     }
 
-    const fetchArticleAndData = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const res = await articleService.getArticleBySlug(slug);
-        if (res.success) {
-          const art = res.data;
-
-          if (user.role !== 'ADMIN' && art.author?.id !== user.id) {
-            alert(currentLang === 'id' ? 'Anda tidak memiliki hak akses untuk mengedit artikel ini!' : 'You do not have permission to edit this article!');
-            navigate('/dashboard/profile');
-            return;
-          }
-
-          setTitle(art.title || '');
-          setNewSlug(art.slug || '');
-          setCurrentThumbnailUrl(art.thumbnail || '');
-          setCategoryId(art.category?.id || '');
-          setDriverId(art.driver?.id || '');
-          setContent(art.content || '');
-        }
-
-        const [catRes, drivRes] = await Promise.all([
+        const [catRes, drivRes, articleRes] = await Promise.all([
           api.get('/categories'),
-          api.get('/drivers')
+          api.get('/drivers'),
+          articleService.getArticleBySlug(articleSlug)
         ]);
+
         setCategories(catRes.data?.data || catRes.data || []);
         setDrivers(drivRes.data?.data || drivRes.data || []);
 
+        const art = articleRes.data || articleRes;
+        if (art) {
+          setTitle(art.title || '');
+          setSlug(art.slug || '');
+          setContent(art.content || '');
+          setCategoryId(art.categoryId || art.category?.id || '');
+          setDriverId(art.driverId || art.driver?.id || '');
+          setStatus(art.status || 'DRAFT');
+          setExistingThumbnail(art.thumbnail || '');
+        }
       } catch (err) {
         console.error("Gagal memuat data artikel:", err);
-        setMsg({ type: 'error', text: 'Gagal memuat data artikel.' });
+        setMsg({
+          type: 'error',
+          text: currentLang === 'id' ? 'Gagal memuat data artikel.' : 'Failed to load article data.'
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchArticleAndData();
-  }, [slug, user, isAuthenticated, navigate]);
+    fetchData();
+  }, [articleSlug, user, isAuthenticated, navigate, currentLang]);
+
+  const handleTitleChange = (e) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    setSlug(newTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
+  };
 
   const insertFormatting = (startTag, endTag = '') => {
     const textarea = document.getElementById('article-content-textarea');
@@ -88,65 +95,72 @@ export default function EditArticle() {
 
     const newContent = content.substring(0, start) + replacement + content.substring(end);
     setContent(newContent);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + startTag.length, start + startTag.length + selectedText.length);
+    }, 50);
   };
 
-  const handleUpdate = async (e) => {
+  // 🟢 HANDLE DUA TOMBOL AKSI: SAVE AS DRAFT ATAU PUBLISH ARTICLE
+  const handleSubmit = async (e, articleStatus) => {
     e.preventDefault();
     setIsSubmitting(true);
     setMsg({ type: '', text: '' });
 
+    if (!categoryId || !driverId) {
+      setMsg({
+        type: 'error',
+        text: currentLang === 'id' ? 'Kategori dan Driver wajib dipilih!' : 'Category and Driver are required!'
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      // 🟢 MENGGUNAKAN FORMDATA KARENA UPDATE BISA TERMASUK GAMBAR
       const formData = new FormData();
       formData.append('title', title);
-      formData.append('slug', newSlug);
+      formData.append('slug', slug);
       formData.append('content', content);
+      formData.append('authorId', user.id);
       formData.append('categoryId', categoryId);
       formData.append('driverId', driverId);
-      
-      // Jika Author memilih foto baru, kirim. Jika tidak, backend akan pakai yang lama.
-      if (newThumbnailFile) {
-        formData.append('thumbnail', newThumbnailFile);
+      formData.append('status', articleStatus);
+
+      if (articleStatus === 'PUBLISHED') {
+        formData.append('publishedAt', new Date().toISOString());
       }
 
-      await articleService.updateArticle(slug, formData);
-      
-      setMsg({ type: 'success', text: currentLang === 'id' ? '🟢 Artikel berhasil diperbarui!' : '🟢 Article updated successfully!' });
-      
+      if (thumbnailFile) {
+        formData.append('thumbnail', thumbnailFile);
+      }
+
+      await articleService.updateArticle(articleSlug, formData);
+
+      setMsg({
+        type: 'success',
+        text: articleStatus === 'DRAFT'
+          ? (currentLang === 'id' ? '📝 Draf artikel berhasil diperbarui!' : '📝 Draft article updated successfully!')
+          : (currentLang === 'id' ? '🟢 Artikel berhasil dipublikasikan ke Paddock!' : '🟢 Article published successfully!')
+      });
+
       setTimeout(() => {
         navigate('/dashboard/profile');
       }, 1500);
 
     } catch (error) {
-      setMsg({ 
-        type: 'error', 
-        text: error.response?.data?.message || 'Gagal memperbarui artikel.' 
+      setMsg({
+        type: 'error',
+        text: error.response?.data?.message || (currentLang === 'id' ? 'Gagal memperbarui artikel.' : 'Failed to update article.')
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const SidebarItem = ({ to, icon: Icon, label }) => {
-    const isActive = location.pathname === to;
-    return (
-      <Link 
-        to={to} 
-        className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors text-sm font-bold uppercase tracking-wider ${
-          isActive 
-            ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' 
-            : 'text-gray-400 hover:text-white hover:bg-gray-800'
-        }`}
-      >
-        <Icon className={isActive ? 'text-[#E10600] text-lg' : 'text-lg'} /> 
-        <span className="hidden md:block">{label}</span>
-      </Link>
-    );
-  };
-
   if (isLoading) {
     return (
-      <div className="bg-[#121212] min-h-screen flex items-center justify-center text-[#E10600] font-bold tracking-widest uppercase">
+      <div className="bg-[#121212] min-h-screen flex items-center justify-center text-[#E10600] font-bold tracking-widest uppercase text-xs md:text-sm">
         {currentLang === 'id' ? 'Memuat Data Artikel...' : 'Loading Article Data...'}
       </div>
     );
@@ -155,37 +169,47 @@ export default function EditArticle() {
   return (
     <div className="bg-[#121212] text-white min-h-screen flex flex-col md:flex-row max-w-[1400px] mx-auto border-x border-gray-900/50">
       
+      {/* 🟢 SIDEBAR UNIVERSAL */}
       <aside className="w-full md:w-64 bg-[#181818] border-b md:border-b-0 md:border-r border-gray-800 flex flex-col shrink-0">
-        <div className="p-6 border-b border-gray-800 hidden md:block">
-          <h2 className="text-lg font-black text-white tracking-widest uppercase">CMS Panel</h2>
-          <p className="text-xs text-[#E10600] mt-1 font-bold">Author Dashboard</p>
-        </div>
-        <nav className="flex md:flex-col gap-2 p-4 overflow-x-auto md:overflow-x-visible scrollbar-hide">
-          <SidebarItem to="/dashboard/write" icon={FaPenNib} label={currentLang === 'id' ? 'Tulis Artikel' : 'Write Article'} />
-          <SidebarItem to="/dashboard/profile" icon={FaUserCog} label={currentLang === 'id' ? 'Edit Profil' : 'Edit Profile'} />
+        <nav className="flex md:flex-col gap-1 p-4 md:pt-8 overflow-x-auto md:overflow-x-visible scrollbar-hide text-xs font-bold uppercase tracking-wider">
+          
+          {user?.role === 'ADMIN' && (
+            <>
+              <Link to="/dashboard/admin" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/admin' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+                <FaChartBar className={location.pathname === '/dashboard/admin' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Ringkasan' : 'Overview'}
+              </Link>
+              <Link to="/dashboard/admin/categories" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/admin/categories' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+                <FaTags className={location.pathname === '/dashboard/admin/categories' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Kategori' : 'Categories'}
+              </Link>
+              <Link to="/dashboard/admin/drivers" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/admin/drivers' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+                <FaCar className={location.pathname === '/dashboard/admin/drivers' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Pembalap' : 'Drivers'}
+              </Link>
+              <div className="my-2 border-t border-gray-800/80 hidden md:block"></div>
+            </>
+          )}
+
+          <Link to="/dashboard/write" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname.includes('/dashboard/write') || location.pathname.includes('/edit-article') ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+            <FaPenNib className={location.pathname.includes('/dashboard/write') || location.pathname.includes('/edit-article') ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Edit Artikel' : 'Edit Article'}
+          </Link>
+          <Link to="/dashboard/profile" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/profile' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+            <FaUserCog className={location.pathname === '/dashboard/profile' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Profil' : 'Profile'}
+          </Link>
+
         </nav>
       </aside>
 
-      <main className="flex-1 p-6 md:p-12 w-full max-w-4xl">
-        
-        <div className="mb-6">
-          <Link 
-            to="/dashboard/profile" 
-            className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-[#E10600] uppercase tracking-wider transition-colors"
-          >
-            <FaArrowLeft /> {currentLang === 'id' ? 'Kembali ke Dashboard' : 'Back to Dashboard'}
-          </Link>
-        </div>
-
-        <div className="mb-8 border-b border-gray-800 pb-6">
+      {/* 🟢 MAIN CONTENT AREA */}
+      <main className="flex-1 p-6 md:p-10 w-full">
+        <div className="mb-8 border-b border-gray-800 pb-6 flex justify-between items-end">
           <div className="border-l-4 border-[#E10600] pl-4">
-            <h1 className="text-2xl md:text-3xl font-extrabold uppercase tracking-tight">
-              {currentLang === 'id' ? 'Edit Artikel' : 'Edit Article'}
-            </h1>
-            <p className="text-gray-400 text-sm mt-1">
-              {currentLang === 'id' ? 'Perbarui informasi atau konten artikel Anda.' : 'Update your article information or content.'}
-            </p>
+            <h1 className="text-2xl md:text-3xl font-extrabold uppercase tracking-tight">{currentLang === 'id' ? 'Edit Artikel' : 'Edit Article'}</h1>
+            <p className="text-gray-400 text-sm mt-1">{currentLang === 'id' ? 'Perbarui draf atau publikasi artikel Anda.' : 'Update your draft or published article.'}</p>
           </div>
+          <span className={`text-[10px] px-3 py-1 rounded font-mono font-bold tracking-wider uppercase border ${
+            status === 'PUBLISHED' ? 'bg-green-500/10 border-green-500/50 text-green-400' : 'bg-amber-500/10 border-amber-500/50 text-amber-400'
+          }`}>
+            STATUS: {status}
+          </span>
         </div>
 
         {msg.text && (
@@ -197,7 +221,7 @@ export default function EditArticle() {
         )}
 
         <div className="bg-[#1A1A1A] border border-gray-800 rounded-lg p-6 md:p-8 shadow-2xl">
-          <form onSubmit={handleUpdate} className="space-y-6">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -207,8 +231,9 @@ export default function EditArticle() {
                 <input 
                   type="text"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-[#121212] border border-gray-700 text-white rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#E10600]"
+                  onChange={handleTitleChange}
+                  placeholder="Contoh: Red Bull's Dominance"
+                  className="w-full bg-[#121212] border border-gray-700 text-white rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#E10600] transition-colors"
                   required
                 />
               </div>
@@ -218,9 +243,10 @@ export default function EditArticle() {
                 </label>
                 <input 
                   type="text"
-                  value={newSlug}
-                  onChange={(e) => setNewSlug(e.target.value.toLowerCase())}
-                  className="w-full bg-[#121212] border border-gray-700 text-gray-400 rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#E10600]"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value.toLowerCase())}
+                  placeholder="red-bull-dominance"
+                  className="w-full bg-[#121212] border border-gray-700 text-gray-400 rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#E10600] transition-colors"
                   required
                 />
               </div>
@@ -234,10 +260,10 @@ export default function EditArticle() {
                 <select 
                   value={categoryId} 
                   onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full bg-[#121212] border border-gray-700 text-white rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#E10600]"
+                  className="w-full bg-[#121212] border border-gray-700 text-white rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#E10600] transition-colors appearance-none"
                   required
                 >
-                  <option value="" disabled>-- Select --</option>
+                  <option value="" disabled>-- {currentLang === 'id' ? 'Pilih Kategori' : 'Select Category'} --</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
@@ -250,10 +276,10 @@ export default function EditArticle() {
                 <select 
                   value={driverId} 
                   onChange={(e) => setDriverId(e.target.value)}
-                  className="w-full bg-[#121212] border border-gray-700 text-white rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#E10600]"
+                  className="w-full bg-[#121212] border border-gray-700 text-white rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[#E10600] transition-colors appearance-none"
                   required
                 >
-                  <option value="" disabled>-- Select --</option>
+                  <option value="" disabled>-- {currentLang === 'id' ? 'Pilih Pembalap' : 'Select Driver'} --</option>
                   {drivers.map((drv) => (
                     <option key={drv.id} value={drv.id}>{drv.name} ({drv.team})</option>
                   ))}
@@ -261,23 +287,20 @@ export default function EditArticle() {
               </div>
             </div>
 
-            {/* 🟢 INPUT FILE (OPSIONAL UNTUK EDIT) */}
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <FaImage className="text-[#E10600]" /> {currentLang === 'id' ? 'Ubah Thumbnail (Opsional)' : 'Change Thumbnail (Optional)'}
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <FaImage className="text-[#E10600]" /> {currentLang === 'id' ? 'Ganti Thumbnail (Opsional)' : 'Change Thumbnail (Optional)'}
               </label>
-              
-              {currentThumbnailUrl && (
-                <div className="mb-4">
-                  <img src={currentThumbnailUrl} alt="Current" className="h-24 rounded border border-gray-700 object-cover opacity-80" />
-                  <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">{currentLang === 'id' ? 'Thumbnail Saat Ini' : 'Current Thumbnail'}</p>
+              {existingThumbnail && (
+                <div className="mb-3 flex items-center gap-3 bg-[#121212] p-2 rounded border border-gray-800">
+                  <img src={existingThumbnail.startsWith('http') ? existingThumbnail : "https://images.unsplash.com/photo-1541252260730-0412e8e2108e?q=80&w=200&auto=format&fit=crop"} alt="Current Thumbnail" className="w-16 h-10 object-cover rounded" />
+                  <span className="text-xs text-gray-400">{currentLang === 'id' ? 'Thumbnail Saat Ini' : 'Current Thumbnail'}</span>
                 </div>
               )}
-
               <input 
                 type="file"
                 accept="image/*"
-                onChange={(e) => setNewThumbnailFile(e.target.files[0])}
+                onChange={(e) => setThumbnailFile(e.target.files[0])}
                 className="w-full bg-[#121212] border border-gray-700 text-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:border-[#E10600] file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-wider file:bg-[#1A1A1A] file:text-[#E10600] hover:file:bg-[#E10600] hover:file:text-white file:transition-colors file:cursor-pointer"
               />
             </div>
@@ -344,19 +367,35 @@ export default function EditArticle() {
               )}
             </div>
 
-            <div className="pt-4 flex justify-end border-t border-gray-800">
+            {/* 🟢 DUA TOMBOL AKSI: SAVE AS DRAFT & PUBLISH ARTICLE */}
+            <div className="pt-4 flex flex-col sm:flex-row justify-end gap-3 border-t border-gray-800">
+              
+              {/* SAVE AS DRAFT */}
               <button
-                type="submit"
+                type="button"
                 disabled={isSubmitting}
-                className="bg-[#E10600] hover:bg-red-700 text-white font-bold py-3 px-8 rounded-sm text-xs tracking-widest uppercase flex items-center gap-2 transition-all disabled:opacity-50 shadow-lg"
+                onClick={(e) => handleSubmit(e, 'DRAFT')}
+                className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-sm text-xs tracking-widest uppercase flex items-center justify-center gap-2 transition-all disabled:opacity-50"
               >
-                <FaSave /> {isSubmitting ? (currentLang === 'id' ? 'MENYIMPAN...' : 'SAVING...') : (currentLang === 'id' ? 'SIMPAN PERUBAHAN' : 'SAVE CHANGES')}
+                <FaSave />
+                {isSubmitting ? '...' : currentLang === 'id' ? 'SIMPAN SEBAGAI DRAFT' : 'SAVE AS DRAFT'}
               </button>
+
+              {/* PUBLISH */}
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={(e) => handleSubmit(e, 'PUBLISHED')}
+                className="bg-[#E10600] hover:bg-red-700 text-white font-bold py-3 px-8 rounded-sm text-xs tracking-widest uppercase flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg"
+              >
+                <FaSave />
+                {isSubmitting ? '...' : currentLang === 'id' ? 'TERBITKAN ARTIKEL' : 'PUBLISH ARTICLE'}
+              </button>
+
             </div>
 
           </form>
         </div>
-
       </main>
     </div>
   );
