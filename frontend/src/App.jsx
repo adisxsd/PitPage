@@ -9,6 +9,9 @@ import AuthorProfile from "./pages/AuthorProfile";
 import EditProfile from "./pages/EditProfile";
 import WriteArticle from "./pages/WriteArticle";
 import EditArticle from "./pages/EditArticle";
+import AdminDashboard from './pages/AdminDashboard';
+import ManageCategories from './pages/ManageCategories';
+import ManageDrivers from './pages/ManageDrivers';
 
 export default function App() {
   return (
@@ -26,6 +29,9 @@ export default function App() {
             <Route path="/dashboard/profile" element={<EditProfile />} />
             <Route path="/dashboard/write" element={<WriteArticle />} />
             <Route path="/dashboard/edit-article/:slug" element={<EditArticle />} />
+            <Route path="/dashboard/admin" element={<AdminDashboard />} />
+            <Route path="/dashboard/admin/categories" element={<ManageCategories />} />
+            <Route path="/dashboard/admin/drivers" element={<ManageDrivers />} />
           </Routes>
         </div>
 
