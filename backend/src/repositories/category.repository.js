@@ -1,7 +1,11 @@
 const prisma = require('../config/prisma.js');
 
 async function findAll() {
-    return await prisma.category.findMany()
+    return await prisma.category.findMany({
+        orderBy: {
+            name: 'asc',
+        },
+    })
 };
 
 async function findById(id) {
