@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { articleService } from '../services/articleService';
+import { categoryService } from '../services/categoryService'; // 🟢 TAMBAHAN IMPORT
 import { translations } from '../utils/translations';
 
 export default function Articles() {
@@ -9,27 +10,51 @@ export default function Articles() {
 
   const [articles, setArticles] = useState([]);
   const [filteredArticles, setFilteredArticles] = useState([]);
+  const [categories, setCategories] = useState([]); // 🟢 STATE KATEGORI DINAMIS
   const [activeCategory, setActiveCategory] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchArticles = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await articleService.getAllArticles();
-        if (response.success) {
-          setArticles(response.data);
-          setFilteredArticles(response.data);
+        // 🟢 Ambil Artikel dan Kategori secara bersamaan
+        // Gunakan .catch(() => null) agar jika API Category masih dikunci (403), web tidak crash
+        const [artRes, catRes] = await Promise.all([
+          articleService.getAllArticles(),
+          categoryService.getAllCategories().catch(() => null)
+        ]);
+
+        let loadedArticles = [];
+        if (artRes.success && Array.isArray(artRes.data)) {
+          // Urutkan artikel dari yang terbaru
+          loadedArticles = artRes.data.sort((a, b) => {
+            const dateA = new Date(a.publishedAt || a.createdAt);
+            const dateB = new Date(b.publishedAt || b.createdAt);
+            return dateB - dateA;
+          });
+          setArticles(loadedArticles);
+          setFilteredArticles(loadedArticles);
         }
+
+        // 🟢 SET KATEGORI DINAMIS
+        if (catRes && catRes.success && Array.isArray(catRes.data)) {
+          setCategories(catRes.data); // Pakai data asli dari API Categories
+        } else {
+          // JURUS CADANGAN: Jika API Categories error/dikunci, ekstrak dari artikel yang ada
+          const uniqueCats = Array.from(new Set(loadedArticles.map(a => a.category?.name).filter(Boolean)));
+          setCategories(uniqueCats.map((name, idx) => ({ id: `fallback-${idx}`, name })));
+        }
+
       } catch (error) {
-        console.error("Gagal memuat daftar artikel:", error);
+        console.error("Gagal memuat data:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchArticles();
+    fetchData();
   }, []);
 
   const handleFilterCategory = (categoryName) => {
@@ -50,6 +75,11 @@ export default function Articles() {
     return new Date(dateString).toLocaleDateString(currentLang === 'id' ? 'id-ID' : 'en-US', options);
   };
 
+  const stripHtmlTags = (html) => {
+    if (!html) return '';
+    return html.replace(/<\/?[^>]+(>|$)/g, "");
+  };
+
   if (isLoading) {
     return (
       <div className="bg-[#121212] min-h-screen flex items-center justify-center text-[#E10600] font-bold tracking-widest uppercase">
@@ -66,18 +96,29 @@ export default function Articles() {
         <p className="text-gray-400 text-sm mt-1">{t.subtitle}</p>
       </div>
 
+      {/* 🟢 TOMBOL FILTER DINAMIS */}
       <div className="flex space-x-3 text-xs md:text-sm font-semibold overflow-x-auto pb-4 mb-10 scrollbar-hide border-b border-gray-800">
-        {['All', 'News', 'Race Reports', 'Tech Talk', 'Rumors'].map((cat) => (
+        <button
+          onClick={() => handleFilterCategory('All')}
+          className={`px-5 py-2 rounded-full whitespace-nowrap transition-colors ${
+            activeCategory === 'All'
+              ? 'bg-[#E10600] text-white font-bold'
+              : 'border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white'
+          }`}
+        >
+          {t.all_news}
+        </button>
+        {categories.map((cat) => (
           <button
-            key={cat}
-            onClick={() => handleFilterCategory(cat)}
+            key={cat.id}
+            onClick={() => handleFilterCategory(cat.name)}
             className={`px-5 py-2 rounded-full whitespace-nowrap transition-colors ${
-              activeCategory === cat
+              activeCategory === cat.name
                 ? 'bg-[#E10600] text-white font-bold'
                 : 'border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white'
             }`}
           >
-            {cat === 'All' ? t.all_news : cat}
+            {cat.name}
           </button>
         ))}
       </div>
@@ -111,7 +152,7 @@ export default function Articles() {
                     {article.title}
                   </h3>
                   <p className="text-gray-400 text-sm line-clamp-3 leading-relaxed">
-                    {article.content}
+                    {stripHtmlTags(article.content)}
                   </p>
                 </div>
               </div>
@@ -128,7 +169,7 @@ export default function Articles() {
                 ) : (
                   <span className="text-gray-400">By PitPage Team</span>
                 )}
-                <span>{formatDate(article.publishedAt)}</span>
+                <span>{formatDate(article.publishedAt || article.createdAt)}</span>
               </div>
             </div>
           ))}

@@ -1,32 +1,29 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { FaUserCircle, FaPenNib, FaGlobe } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom'; // 🟢 TAMBAHAN: Import useNavigate
+import { FaUserCircle, FaPenNib, FaGlobe, FaChartBar } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import useAuthStore from '../store/useAuthStore';
-import { translations } from '../utils/translations'; // Ambil dari kamus lokal yang aman
+import { translations } from '../utils/translations'; 
 
 export default function Navbar() {
   const { openModal, isAuthenticated, logout, user } = useAuthStore();
+  const navigate = useNavigate(); // 🟢 Inisialisasi navigate
   
-  // State bahasa ('en' atau 'id'), dibaca dari localStorage agar tersimpan
   const [lang, setLang] = useState(() => localStorage.getItem('pitpage_lang') || 'en');
-
-  // 🟢 Ambil khusus namespace 'navbar' dari kamus terpusat
   const t = translations[lang]?.navbar || translations.en.navbar;
 
   const toggleLanguage = () => {
     const nextLang = lang === 'en' ? 'id' : 'en';
     localStorage.setItem('pitpage_lang', nextLang);
     setLang(nextLang);
-    // Refresh halaman agar seluruh halaman ikut berubah bahasa secara serentak
     window.location.reload();
   };
 
   const handleLogout = () => {
     const isConfirmed = window.confirm(t.confirm_logout);
     if (isConfirmed) {
-      logout();
-      window.location.reload();
+      logout(); // Menghapus sesi/token
+      navigate('/'); // 🟢 FIX: Langsung lempar kembali ke Home
     }
   };
 
@@ -56,7 +53,6 @@ export default function Navbar() {
           <span className="absolute left-3 top-1.5 text-gray-400 text-xs">🔍</span>
         </div>
         
-        {/* Tombol Ganti Bahasa Aman */}
         <button 
           onClick={toggleLanguage}
           className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-white transition-colors uppercase px-2.5 py-1 bg-[#1A1A1A] border border-gray-800 rounded"
@@ -67,6 +63,17 @@ export default function Navbar() {
 
         {isAuthenticated ? (
           <div className="flex items-center space-x-4">
+            
+            {/* HANYA MUNCUL JIKA USER = ADMIN */}
+            {user?.role === 'ADMIN' && (
+              <Link 
+                to="/dashboard/admin"
+                className="flex items-center justify-center w-8 h-8 rounded bg-[#1A1A1A] border border-[#E10600]/60 text-[#E10600] hover:text-white hover:border-[#E10600] hover:bg-[#E10600] transition-all shadow-[0_0_10px_rgba(225,6,0,0.2)] group"
+                title="Race Control (Admin Dashboard)"
+              >
+                <FaChartBar className="text-sm" />
+              </Link>
+            )}
             
             <Link 
               to="/dashboard/write"

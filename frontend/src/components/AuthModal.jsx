@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/useAuthStore';
 import logo from '../assets/logo.png';
 
 export default function AuthModal() {
   const { isModalOpen, closeModal, modalView, setModalView, login, register } = useAuthStore();
+  const navigate = useNavigate(); 
 
   // State untuk menangkap inputan form
   const [loginUser, setLoginUser] = useState('');
@@ -20,7 +22,7 @@ export default function AuthModal() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // 🟢 FITUR BARU: Otomatis kosongkan form setiap kali modal ditutup
+  // Otomatis kosongkan form setiap kali modal ditutup
   useEffect(() => {
     if (!isModalOpen) {
       setLoginUser('');
@@ -44,22 +46,41 @@ export default function AuthModal() {
     setSuccessMsg('');
   };
 
-  // Eksekusi Login
-const handleLoginSubmit = async (e) => {
+  // 🟢 EKSEKUSI LOGIN YANG DISEMPURNAKAN
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMsg('');
     
-    const res = await login(loginUser, loginPass);
-    if (res && res.success) {
-      window.location.reload(); 
-    } else { 
-      setErrorMsg(res?.message || 'Gagal melakukan login.');
+    try {
+      const res = await login(loginUser, loginPass);
+      
+      if (res && (res.success || res.token || res.data?.token)) {
+        // Ambil data user dari berbagai kemungkinan struktur response backend
+        const userData = res.data?.user || res.user || res.data;
+        const userRole = userData?.role; 
+        
+        // Tutup Modal
+        closeModal();
+        
+        // Arahkan halaman sesuai dengan Role-nya
+        if (userRole === 'ADMIN') {
+          navigate('/dashboard/admin'); // Admin ke CMS Race Control
+        } else {
+          navigate('/'); // User biasa/Author diarahkan ke Home
+        }
+      } else { 
+        setErrorMsg(res?.message || 'Gagal melakukan login. Periksa kembali username/password.');
+      }
+    } catch (err) {
+      console.error("Login Error:", err);
+      setErrorMsg(err.response?.data?.message || 'Terjadi kesalahan pada server saat login.');
+    } finally {
       setIsLoading(false);
     }
   };
 
-  // Eksekusi Register
+  // 🟢 EKSEKUSI REGISTER YANG DISEMPURNAKAN
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     if (regPass !== regConfirm) {
@@ -70,16 +91,26 @@ const handleLoginSubmit = async (e) => {
     setIsLoading(true);
     setErrorMsg('');
     
-    const res = await register(regName, regUser, regEmail, regPass);
-    if (res && res.success) {
-      // 🟢 FITUR BARU: Notif Register Berhasil & Otomatis ke Login
-      alert("🟢 REGISTRASI BERHASIL! Silakan login dengan akun barumu.");
-      setRegName(''); setRegUser(''); setRegEmail(''); setRegPass(''); setRegConfirm('');
-      switchView('login'); // Otomatis pindah ke tab login
-    } else {
-      setErrorMsg(res?.message || 'Gagal membuat akun.');
+    try {
+      const res = await register(regName, regUser, regEmail, regPass);
+      
+      if (res && (res.success || res.status === 201 || res.status === 200)) {
+        setSuccessMsg("🟢 Registrasi berhasil! Silakan login dengan akun barumu.");
+        setRegName(''); setRegUser(''); setRegEmail(''); setRegPass(''); setRegConfirm('');
+        
+        // Beri jeda 1.5 detik agar pesan sukses terbaca sebelum pindah ke tab login
+        setTimeout(() => {
+          switchView('login');
+        }, 1500);
+      } else {
+        setErrorMsg(res?.message || 'Gagal membuat akun.');
+      }
+    } catch (err) {
+      console.error("Register Error:", err);
+      setErrorMsg(err.response?.data?.message || 'Terjadi kesalahan pada server saat registrasi.');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
@@ -95,7 +126,7 @@ const handleLoginSubmit = async (e) => {
         </div>
 
         {/* Notifikasi Error / Sukses */}
-        {errorMsg && <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded text-red-500 text-xs text-center">{errorMsg}</div>}
+        {errorMsg && <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded text-red-400 text-xs text-center">{errorMsg}</div>}
         {successMsg && <div className="mb-4 p-3 bg-green-500/20 border border-green-500 rounded text-green-400 text-xs text-center">{successMsg}</div>}
 
         {/* --- TAMPILAN LOGIN --- */}
