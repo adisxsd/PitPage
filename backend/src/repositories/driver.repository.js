@@ -1,7 +1,7 @@
 const prisma = require('../config/prisma.js');
 
 async function findAll() {
-    return await prisma.driver.findMany();
+    return await prisma.driver.findMany({}) 
 };
 
 async function findById(id) {
