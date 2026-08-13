@@ -4,8 +4,8 @@ const streamifier = require('streamifier');
 
 
 
-async function getAllArticles() {
-    const articles = await articleRepository.findAll();
+async function getAllArticles(search) {
+    const articles = await articleRepository.findAll(search);
 
     return articles;
 };

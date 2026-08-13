@@ -12,7 +12,7 @@ const requireAdmin = require('../middlewares/role.middleware.js');
 router.get("/", requireAdmin, authorController.getAllAuthors);
 router.get("/:id", authorController.getAuthorById);
 router.get("/:id/articles", articlesController.getArticleByAuthorId);
-router.put("/:id", authorController.updateAuthor);
-router.delete("/:id", requireAdmin, authorController.deleteAuthor);
+router.put("/:id", authenticateToken, authorController.updateAuthor);
+router.delete("/:id", authenticateToken, authorController.deleteAuthor);
 
 module.exports = router;

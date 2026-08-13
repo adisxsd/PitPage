@@ -3,7 +3,8 @@ const articleService = require("../services/article.service.js");
 
 async function getAllArticles(req, res) {
     try {
-        const articles = await articleService.getAllArticles();
+        const { search } = req.query;
+        const articles = await articleService.getAllArticles(search);
 
         return res.status(200).json({
             success: true,
