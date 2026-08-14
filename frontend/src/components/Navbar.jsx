@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // 🟢 TAMBAHAN: Import useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import { FaUserCircle, FaPenNib, FaGlobe, FaChartBar } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import useAuthStore from '../store/useAuthStore';
@@ -7,7 +7,7 @@ import { translations } from '../utils/translations';
 
 export default function Navbar() {
   const { openModal, isAuthenticated, logout, user } = useAuthStore();
-  const navigate = useNavigate(); // 🟢 Inisialisasi navigate
+  const navigate = useNavigate(); 
   
   const [lang, setLang] = useState(() => localStorage.getItem('pitpage_lang') || 'en');
   const t = translations[lang]?.navbar || translations.en.navbar;
@@ -22,35 +22,47 @@ export default function Navbar() {
   const handleLogout = () => {
     const isConfirmed = window.confirm(t.confirm_logout);
     if (isConfirmed) {
-      logout(); // Menghapus sesi/token
-      navigate('/'); // 🟢 FIX: Langsung lempar kembali ke Home
+      logout(); 
+      navigate('/'); 
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const keyword = e.target.search.value;
+    if (keyword.trim()) {
+      navigate(`/?search=${keyword}`);
+    } else {
+      navigate('/');
     }
   };
 
   return (
     <nav className="bg-[#121212] border-b border-gray-800 text-white p-4 flex justify-between items-center sticky top-0 z-50">
-      {/* Logo & Links Kiri */}
+      
       <div className="flex items-center space-x-8">
         <Link to="/" className="flex items-center">
           <img src={logo} alt="PitPage Logo" className="h-7 md:h-9 object-contain" />
         </Link>
         <ul className="hidden md:flex space-x-6 text-sm font-semibold text-gray-300">
           <li><Link to="/articles" className="text-[#E10600] border-b-2 border-[#E10600] pb-1">{t.news}</Link></li>
-          <li><Link to="/" className="hover:text-white transition-colors">{t.drivers}</Link></li>
-          <li><Link to="/" className="hover:text-white transition-colors">{t.calendar}</Link></li>
-          <li><Link to="/" className="hover:text-white transition-colors">{t.teams}</Link></li>
+          <li><Link to="/drivers" className="hover:text-white transition-colors">{t.drivers}</Link></li>
+          <li><Link to="/teams" className="hover:text-white transition-colors">{t.teams}</Link></li>
+          <li><Link to="/calendar" className="hover:text-white transition-colors">{t.calendar}</Link></li>
         </ul>
       </div>
 
-      {/* Search & Login Kanan */}
       <div className="flex items-center space-x-4">
+
         <div className="relative hidden md:block">
-          <input 
-            type="text" 
-            placeholder={t.search} 
-            className="bg-[#222] border border-gray-700 text-white text-sm rounded-md px-8 py-1.5 focus:outline-none focus:border-[#E10600] transition-colors"
-          />
-          <span className="absolute left-3 top-1.5 text-gray-400 text-xs">🔍</span>
+          <form onSubmit={handleSearchSubmit}>
+            <input 
+              type="text" 
+              name="search"
+              placeholder={t.search} 
+              className="bg-[#222] border border-gray-700 text-white text-sm rounded-md px-4 py-1.5 focus:outline-none focus:border-[#E10600] transition-colors"
+            />
+          </form>
         </div>
         
         <button 
@@ -63,8 +75,6 @@ export default function Navbar() {
 
         {isAuthenticated ? (
           <div className="flex items-center space-x-4">
-            
-            {/* HANYA MUNCUL JIKA USER = ADMIN */}
             {user?.role === 'ADMIN' && (
               <Link 
                 to="/dashboard/admin"
@@ -102,7 +112,6 @@ export default function Navbar() {
             >
               {t.logout}
             </button>
-            
           </div>
         ) : (
           <button 

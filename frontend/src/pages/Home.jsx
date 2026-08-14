@@ -1,61 +1,81 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'; 
 import useAuthStore from '../store/useAuthStore';
 import { articleService } from '../services/articleService';
-import { categoryService } from '../services/categoryService'; // 🟢 TAMBAHAN IMPORT
+import { categoryService } from '../services/categoryService';
 import { translations } from '../utils/translations';
 
 export default function Home() {
   const { isAuthenticated, openModal } = useAuthStore();
   const navigate = useNavigate();
+  
+  const [searchParams] = useSearchParams();
+  const urlSearchQuery = searchParams.get('search') || '';
 
   const currentLang = localStorage.getItem('pitpage_lang') || 'en';
   const t = translations[currentLang]?.home || translations.en.home;
 
   const [articles, setArticles] = useState([]);
   const [filteredArticles, setFilteredArticles] = useState([]);
-  const [categories, setCategories] = useState([]); // 🟢 KATEGORI DINAMIS
+  const [categories, setCategories] = useState([]); 
   const [activeCategory, setActiveCategory] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
+  
+  // State untuk form search lokal di halaman Home
+  const [localSearch, setLocalSearch] = useState(urlSearchQuery);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        // Kita ambil semua artikel agar filter bisa bekerja dengan baik di halaman depan
-        const [artRes, catRes] = await Promise.all([
-          articleService.getAllArticles(),
-          categoryService.getAllCategories().catch(() => null)
-        ]);
+  const fetchData = async (keyword = '') => {
+    try {
+      setIsLoading(true);
+      const [artRes, catRes] = await Promise.all([
+        articleService.getAllArticles(keyword), // Kirim keyword ke backend
+        categoryService.getAllCategories().catch(() => null)
+      ]);
 
-        let loadedArticles = [];
-        if (artRes.success && Array.isArray(artRes.data)) {
-          loadedArticles = artRes.data.sort((a, b) => {
-            const dateA = new Date(a.publishedAt || a.createdAt);
-            const dateB = new Date(b.publishedAt || b.createdAt);
-            return dateB - dateA;
-          });
-          setArticles(loadedArticles);
-          setFilteredArticles(loadedArticles);
-        }
+      let loadedArticles = [];
+      if (artRes.success && Array.isArray(artRes.data)) {
+        loadedArticles = artRes.data.sort((a, b) => {
+          const dateA = new Date(a.publishedAt || a.createdAt);
+          const dateB = new Date(b.publishedAt || b.createdAt);
+          return dateB - dateA;
+        });
+      } else if (Array.isArray(artRes)) {
+        loadedArticles = artRes.sort((a, b) => new Date(b.publishedAt || b.createdAt) - new Date(a.publishedAt || a.createdAt));
+      }
 
-        // Set Kategori Dinamis
+      setArticles(loadedArticles);
+      setFilteredArticles(loadedArticles); 
+      setActiveCategory('All');
+
+      if (categories.length === 0) {
         if (catRes && catRes.success && Array.isArray(catRes.data)) {
           setCategories(catRes.data);
         } else {
           const uniqueCats = Array.from(new Set(loadedArticles.map(a => a.category?.name).filter(Boolean)));
           setCategories(uniqueCats.map((name, idx) => ({ id: `fallback-${idx}`, name })));
         }
-
-      } catch (error) {
-        console.error("Gagal mengambil data Home:", error);
-      } finally {
-        setIsLoading(false);
       }
-    };
 
-    fetchData();
-  }, []);
+    } catch (error) {
+      console.error("Gagal mengambil data Home:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setLocalSearch(urlSearchQuery);
+    fetchData(urlSearchQuery);
+  }, [urlSearchQuery]);
+
+  const handleLocalSearchSubmit = (e) => {
+    e.preventDefault();
+    if (localSearch.trim()) {
+      navigate(`/?search=${localSearch}`); 
+    } else {
+      navigate('/');
+    }
+  };
 
   const handleFilterCategory = (categoryName) => {
     setActiveCategory(categoryName);
@@ -84,7 +104,6 @@ export default function Home() {
     return html.replace(/<\/?[^>]+(>|$)/g, "");
   };
 
-  // 🟢 HANYA AMBIL 4 ARTIKEL TERATAS DARI HASIL FILTER
   const heroArticle = filteredArticles[0];
   const mainArticle = filteredArticles[1];
   const sideArticle1 = filteredArticles[2];
@@ -101,8 +120,8 @@ export default function Home() {
   return (
     <div className="bg-[#121212] text-white min-h-screen pb-20">
       
-      {/* 1. HERO SECTION */}
-      {heroArticle && (
+      {/* 1. HERO SECTION (Tanya tampilkan Hero jika tidak sedang mencari) */}
+      {!urlSearchQuery && heroArticle && (
         <section 
           className="relative min-h-[70vh] md:h-[85vh] bg-cover bg-center flex items-center"
           style={{ 
@@ -145,44 +164,72 @@ export default function Home() {
         </section>
       )}
 
-      {/* 2. CATEGORY TABS (DINAMIS) */}
-      <section className="px-6 md:px-16 py-6 border-b border-gray-800/50">
-        <div className="flex space-x-3 text-xs md:text-sm font-semibold overflow-x-auto pb-2 scrollbar-hide">
-          <button
-            onClick={() => handleFilterCategory('All')}
-            className={`px-5 py-2 rounded-full whitespace-nowrap transition-colors ${
-              activeCategory === 'All'
-                ? 'bg-[#E10600] text-white font-bold'
-                : 'border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white'
-            }`}
-          >
-            {t.all_news}
-          </button>
-          {categories.map((cat) => (
+      {/* 2. CATEGORY TABS (Tampil Hanya jika tidak sedang mencari) */}
+      {!urlSearchQuery && (
+        <section className="px-6 md:px-16 py-6 border-b border-gray-800/50">
+          <div className="flex space-x-3 text-xs md:text-sm font-semibold overflow-x-auto pb-2 scrollbar-hide">
             <button
-              key={cat.id}
-              onClick={() => handleFilterCategory(cat.name)}
+              onClick={() => handleFilterCategory('All')}
               className={`px-5 py-2 rounded-full whitespace-nowrap transition-colors ${
-                activeCategory === cat.name
+                activeCategory === 'All'
                   ? 'bg-[#E10600] text-white font-bold'
                   : 'border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white'
               }`}
             >
-              {cat.name}
+              {t.all_news}
             </button>
-          ))}
-        </div>
-      </section>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => handleFilterCategory(cat.name)}
+                className={`px-5 py-2 rounded-full whitespace-nowrap transition-colors ${
+                  activeCategory === cat.name
+                    ? 'bg-[#E10600] text-white font-bold'
+                    : 'border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
-      {/* 3. LATEST ARTICLES GRID */}
+      {/* 3. LATEST / SEARCH RESULTS GRID */}
       <section className="px-6 md:px-16 py-12 max-w-[1400px] mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold mb-8 border-l-4 border-[#E10600] pl-4">{t.latest_heading}</h2>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-gray-800 pb-4">
+          <h2 className="text-2xl md:text-3xl font-bold border-l-4 border-[#E10600] pl-4">
+            {urlSearchQuery 
+              ? (currentLang === 'id' ? `Hasil Pencarian: "${urlSearchQuery}"` : `Search Results: "${urlSearchQuery}"`)
+              : t.latest_heading
+            }
+          </h2>
+          
+          {/* 🟢 Search Bar Lokal (Home) */}
+          <form onSubmit={handleLocalSearchSubmit} className="flex w-full md:w-auto">
+            <input 
+              type="text" 
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              placeholder={currentLang === 'id' ? "Cari artikel..." : "Search articles..."} 
+              className="w-full md:w-64 bg-[#1A1A1A] border border-gray-700 text-white text-sm rounded-l-md px-4 py-2 focus:outline-none focus:border-[#E10600] transition-colors"
+            />
+            <button type="submit" className="bg-[#E10600] hover:bg-red-700 px-4 py-2 rounded-r-md text-white font-bold text-sm uppercase tracking-wider transition-colors">
+              Cari
+            </button>
+          </form>
+        </div>
         
         {filteredArticles.length === 0 ? (
           <div className="text-center py-20 text-gray-500 border border-dashed border-gray-800 rounded-lg">
             <p className="text-base font-semibold">
-              {currentLang === 'id' ? 'Belum ada artikel di kategori ini.' : 'No articles found in this category.'}
+              {currentLang === 'id' ? 'Tidak ada artikel yang ditemukan.' : 'No articles found.'}
             </p>
+            {urlSearchQuery && (
+              <button onClick={() => navigate('/')} className="mt-4 text-[#E10600] hover:underline text-sm font-bold uppercase">
+                Kembali ke Beranda
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
