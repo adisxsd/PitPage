@@ -12,6 +12,7 @@ import EditArticle from "./pages/EditArticle";
 import AdminDashboard from './pages/AdminDashboard';
 import ManageCategories from './pages/ManageCategories';
 import ManageDrivers from './pages/ManageDrivers';
+import ManageUsers from './pages/ManageUsers';
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
             <Route path="/dashboard/admin" element={<AdminDashboard />} />
             <Route path="/dashboard/admin/categories" element={<ManageCategories />} />
             <Route path="/dashboard/admin/drivers" element={<ManageDrivers />} />
+            <Route path="/dashboard/admin/users" element={<ManageUsers />} />
           </Routes>
         </div>
 
