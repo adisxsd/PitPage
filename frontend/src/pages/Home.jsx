@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'; 
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import useAuthStore from '../store/useAuthStore';
 import { articleService } from '../services/articleService';
 import { categoryService } from '../services/categoryService';
@@ -20,15 +20,13 @@ export default function Home() {
   const [categories, setCategories] = useState([]); 
   const [activeCategory, setActiveCategory] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
-  
-  // State untuk form search lokal di halaman Home
-  const [localSearch, setLocalSearch] = useState(urlSearchQuery);
 
+  // Fungsi Fetch Data
   const fetchData = async (keyword = '') => {
     try {
       setIsLoading(true);
       const [artRes, catRes] = await Promise.all([
-        articleService.getAllArticles(keyword), // Kirim keyword ke backend
+        articleService.getAllArticles(keyword),
         categoryService.getAllCategories().catch(() => null)
       ]);
 
@@ -44,9 +42,10 @@ export default function Home() {
       }
 
       setArticles(loadedArticles);
-      setFilteredArticles(loadedArticles); 
+      setFilteredArticles(loadedArticles);
       setActiveCategory('All');
 
+      // Set Kategori Dinamis
       if (categories.length === 0) {
         if (catRes && catRes.success && Array.isArray(catRes.data)) {
           setCategories(catRes.data);
@@ -63,19 +62,10 @@ export default function Home() {
     }
   };
 
+  // Otomatis jalankan fetch kalau URL pencarian berubah
   useEffect(() => {
-    setLocalSearch(urlSearchQuery);
     fetchData(urlSearchQuery);
   }, [urlSearchQuery]);
-
-  const handleLocalSearchSubmit = (e) => {
-    e.preventDefault();
-    if (localSearch.trim()) {
-      navigate(`/?search=${localSearch}`); 
-    } else {
-      navigate('/');
-    }
-  };
 
   const handleFilterCategory = (categoryName) => {
     setActiveCategory(categoryName);
@@ -120,7 +110,7 @@ export default function Home() {
   return (
     <div className="bg-[#121212] text-white min-h-screen pb-20">
       
-      {/* 1. HERO SECTION (Tanya tampilkan Hero jika tidak sedang mencari) */}
+      {/* 1. HERO SECTION (Hilang saat search) */}
       {!urlSearchQuery && heroArticle && (
         <section 
           className="relative min-h-[70vh] md:h-[85vh] bg-cover bg-center flex items-center"
@@ -164,7 +154,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* 2. CATEGORY TABS (Tampil Hanya jika tidak sedang mencari) */}
+      {/* 2. CATEGORY TABS (Hilang saat search) */}
       {!urlSearchQuery && (
         <section className="px-6 md:px-16 py-6 border-b border-gray-800/50">
           <div className="flex space-x-3 text-xs md:text-sm font-semibold overflow-x-auto pb-2 scrollbar-hide">
@@ -197,27 +187,14 @@ export default function Home() {
 
       {/* 3. LATEST / SEARCH RESULTS GRID */}
       <section className="px-6 md:px-16 py-12 max-w-[1400px] mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-gray-800 pb-4">
+        <div className="mb-8 border-b border-gray-800 pb-4">
           <h2 className="text-2xl md:text-3xl font-bold border-l-4 border-[#E10600] pl-4">
             {urlSearchQuery 
               ? (currentLang === 'id' ? `Hasil Pencarian: "${urlSearchQuery}"` : `Search Results: "${urlSearchQuery}"`)
               : t.latest_heading
             }
           </h2>
-          
-          {/* 🟢 Search Bar Lokal (Home) */}
-          <form onSubmit={handleLocalSearchSubmit} className="flex w-full md:w-auto">
-            <input 
-              type="text" 
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
-              placeholder={currentLang === 'id' ? "Cari artikel..." : "Search articles..."} 
-              className="w-full md:w-64 bg-[#1A1A1A] border border-gray-700 text-white text-sm rounded-l-md px-4 py-2 focus:outline-none focus:border-[#E10600] transition-colors"
-            />
-            <button type="submit" className="bg-[#E10600] hover:bg-red-700 px-4 py-2 rounded-r-md text-white font-bold text-sm uppercase tracking-wider transition-colors">
-              Cari
-            </button>
-          </form>
+          {/* 🟢 Search form lokal dihapus agar tidak bentrok / menumpuk dengan navbar */}
         </div>
         
         {filteredArticles.length === 0 ? (
@@ -227,7 +204,7 @@ export default function Home() {
             </p>
             {urlSearchQuery && (
               <button onClick={() => navigate('/')} className="mt-4 text-[#E10600] hover:underline text-sm font-bold uppercase">
-                Kembali ke Beranda
+                {currentLang === 'id' ? 'Kembali ke Beranda' : 'Back to Home'}
               </button>
             )}
           </div>

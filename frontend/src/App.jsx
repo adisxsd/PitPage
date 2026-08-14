@@ -13,6 +13,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import ManageCategories from './pages/ManageCategories';
 import ManageDrivers from './pages/ManageDrivers';
 import ManageUsers from './pages/ManageUsers';
+import Drivers from './pages/Drivers';
+import DriverProfile from './pages/DriverProfile';
 
 export default function App() {
   return (
@@ -34,6 +36,8 @@ export default function App() {
             <Route path="/dashboard/admin/categories" element={<ManageCategories />} />
             <Route path="/dashboard/admin/drivers" element={<ManageDrivers />} />
             <Route path="/dashboard/admin/users" element={<ManageUsers />} />
+            <Route path="/drivers" element={<Drivers />} />
+            <Route path="/drivers/:id" element={<DriverProfile />} />
           </Routes>
         </div>
 

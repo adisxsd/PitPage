@@ -17,6 +17,16 @@ export const articleService = {
     return response.data;
   },
 
+  getArticlesByDriver: async (driverId) => {
+    const response = await api.get(`/articles/driver/${driverId}`);
+    return response.data;
+  },
+
+  getArticlesByAuthor: async (authorId) => {
+    const response = await api.get(`/articles/author/${authorId}`);
+    return response.data;
+  },
+
   createArticle: async (formData) => {
     const response = await api.post('/articles', formData);
     return response.data;
