@@ -47,13 +47,13 @@ model Article {
 
   authorId   Int
   categoryId Int
-  driverId   Int
+  driverId   Int?
 
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
-  driver Driver @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  driver Driver? @relation(fields: [driverId], references: [id], onDelete: Restrict)
 
   comments Comment[]
 }

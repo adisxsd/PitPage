@@ -9,6 +9,12 @@ async function findAll(search) {
                 contains: search,
                 mode: "insensitive",
                 },
+                driver: {
+                    name: {
+                        contains: search,
+                        mode: "insensitive",
+                    },
+                },
             }),
         },
         include: {
