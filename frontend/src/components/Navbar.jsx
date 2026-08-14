@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // 🟢 TAMBAHAN: Import useNavigate
+import { Link, useNavigate, useLocation } from 'react-router-dom'; // 🟢 Import useLocation
 import { FaUserCircle, FaPenNib, FaGlobe, FaChartBar } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import useAuthStore from '../store/useAuthStore';
@@ -7,10 +7,13 @@ import { translations } from '../utils/translations';
 
 export default function Navbar() {
   const { openModal, isAuthenticated, logout, user } = useAuthStore();
-  const navigate = useNavigate(); // 🟢 Inisialisasi navigate
+  const navigate = useNavigate(); 
+  const location = useLocation(); // 🟢 Ambil path URL saat ini
   
   const [lang, setLang] = useState(() => localStorage.getItem('pitpage_lang') || 'en');
   const t = translations[lang]?.navbar || translations.en.navbar;
+
+  const currentPath = location.pathname;
 
   const toggleLanguage = () => {
     const nextLang = lang === 'en' ? 'id' : 'en';
@@ -22,37 +25,79 @@ export default function Navbar() {
   const handleLogout = () => {
     const isConfirmed = window.confirm(t.confirm_logout);
     if (isConfirmed) {
-      logout(); // Menghapus sesi/token
-      navigate('/'); // 🟢 FIX: Langsung lempar kembali ke Home
+      logout(); 
+      navigate('/'); 
     }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const keyword = e.target.search.value;
+    if (keyword.trim()) {
+      navigate(`/?search=${keyword}`);
+    } else {
+      navigate('/');
+    }
+  };
+
+  // 🟢 Helper style untuk mengecek apakah rute sedang aktif
+  const getNavLinkClass = (path) => {
+    const isActive = currentPath.startsWith(path);
+    return isActive
+      ? "text-[#E10600] border-b-2 border-[#E10600] pb-1 font-bold transition-colors"
+      : "text-gray-300 hover:text-white transition-colors pb-1 font-semibold";
   };
 
   return (
     <nav className="bg-[#121212] border-b border-gray-800 text-white p-4 flex justify-between items-center sticky top-0 z-50">
+      
       {/* Logo & Links Kiri */}
       <div className="flex items-center space-x-8">
         <Link to="/" className="flex items-center">
           <img src={logo} alt="PitPage Logo" className="h-7 md:h-9 object-contain" />
         </Link>
-        <ul className="hidden md:flex space-x-6 text-sm font-semibold text-gray-300">
-          <li><Link to="/articles" className="text-[#E10600] border-b-2 border-[#E10600] pb-1">{t.news}</Link></li>
-          <li><Link to="/" className="hover:text-white transition-colors">{t.drivers}</Link></li>
-          <li><Link to="/" className="hover:text-white transition-colors">{t.calendar}</Link></li>
-          <li><Link to="/" className="hover:text-white transition-colors">{t.teams}</Link></li>
+
+        {/* 🟢 Menu Dinamis Berdasarkan URL Aktif */}
+        <ul className="hidden md:flex space-x-6 text-sm">
+          <li>
+            <Link to="/articles" className={getNavLinkClass('/articles')}>
+              {t.news}
+            </Link>
+          </li>
+          <li>
+            <Link to="/drivers" className={getNavLinkClass('/drivers')}>
+              {t.drivers}
+            </Link>
+          </li>
+          <li>
+            <Link to="/teams" className={getNavLinkClass('/teams')}>
+              {t.teams}
+            </Link>
+          </li>
+          <li>
+            <Link to="/calendar" className={getNavLinkClass('/calendar')}>
+              {t.calendar}
+            </Link>
+          </li>
         </ul>
       </div>
 
       {/* Search & Login Kanan */}
       <div className="flex items-center space-x-4">
+        
+        {/* Kotak Pencarian */}
         <div className="relative hidden md:block">
-          <input 
-            type="text" 
-            placeholder={t.search} 
-            className="bg-[#222] border border-gray-700 text-white text-sm rounded-md px-8 py-1.5 focus:outline-none focus:border-[#E10600] transition-colors"
-          />
-          <span className="absolute left-3 top-1.5 text-gray-400 text-xs">🔍</span>
+          <form onSubmit={handleSearchSubmit}>
+            <input 
+              type="text" 
+              name="search"
+              placeholder={t.search} 
+              className="bg-[#222] border border-gray-700 text-white text-sm rounded-md px-4 py-1.5 focus:outline-none focus:border-[#E10600] transition-colors"
+            />
+          </form>
         </div>
         
+        {/* Switch Bahasa */}
         <button 
           onClick={toggleLanguage}
           className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-white transition-colors uppercase px-2.5 py-1 bg-[#1A1A1A] border border-gray-800 rounded"
@@ -63,8 +108,6 @@ export default function Navbar() {
 
         {isAuthenticated ? (
           <div className="flex items-center space-x-4">
-            
-            {/* HANYA MUNCUL JIKA USER = ADMIN */}
             {user?.role === 'ADMIN' && (
               <Link 
                 to="/dashboard/admin"
@@ -102,7 +145,6 @@ export default function Navbar() {
             >
               {t.logout}
             </button>
-            
           </div>
         ) : (
           <button 

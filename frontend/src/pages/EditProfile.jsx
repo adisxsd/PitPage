@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { 
   FaUser, FaEnvelope, FaIdBadge, FaShieldAlt, FaSave, 
   FaExternalLinkAlt, FaNewspaper, FaPenNib, FaUserCog, FaPlus,
-  FaChartBar, FaTags, FaCar
+  FaChartBar, FaTags, FaCar, FaUsers
 } from 'react-icons/fa';
 import useAuthStore from '../store/useAuthStore';
 import { authorService } from '../services/authorService';
@@ -133,7 +133,7 @@ export default function EditProfile() {
   // Artikel yang sedang ditampilkan di layar berdasarkan tab yang diklik
   const displayedArticles = activeArticleTab === 'PUBLISHED' ? publishedArticles : draftArticles;
 
-  return (
+return (
     <div className="bg-[#121212] text-white min-h-screen flex flex-col md:flex-row max-w-[1400px] mx-auto border-x border-gray-900/50">
       
       {/* 🟢 SIDEBAR UNIVERSAL */}
@@ -145,6 +145,9 @@ export default function EditProfile() {
               <Link to="/dashboard/admin" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/admin' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
                 <FaChartBar className={location.pathname === '/dashboard/admin' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Ringkasan' : 'Overview'}
               </Link>
+              <Link to="/dashboard/admin/users" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/admin/users' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+                <FaUsers className={location.pathname === '/dashboard/admin/users' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Pengguna' : 'Users'}
+              </Link>
               <Link to="/dashboard/admin/categories" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/admin/categories' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
                 <FaTags className={location.pathname === '/dashboard/admin/categories' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Kategori' : 'Categories'}
               </Link>
@@ -155,8 +158,8 @@ export default function EditProfile() {
             </>
           )}
 
-          <Link to="/dashboard/write" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/write' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
-            <FaPenNib className={location.pathname === '/dashboard/write' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Tulis Artikel' : 'Write Article'}
+          <Link to="/dashboard/write" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname.includes('/dashboard/write') || location.pathname.includes('/edit-article') ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+            <FaPenNib className={location.pathname.includes('/dashboard/write') || location.pathname.includes('/edit-article') ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Edit Artikel' : 'Edit Article'}
           </Link>
           <Link to="/dashboard/profile" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/profile' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
             <FaUserCog className={location.pathname === '/dashboard/profile' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Profil' : 'Profile'}

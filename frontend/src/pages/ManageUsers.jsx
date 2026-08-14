@@ -1,63 +1,53 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom'; // 🟢 Tambahkan useLocation
+import { Link, useLocation } from 'react-router-dom';
 import { 
-  FaTags, FaPlus, FaEdit, FaTrashAlt, FaChartBar, 
-  FaCar, FaPenNib, FaUserCog, FaExclamationTriangle, FaTimes, FaCheck, FaUsers
+  FaUsers, FaEdit, FaTrashAlt, FaChartBar, 
+  FaTags, FaCar, FaPenNib, FaUserCog, FaExclamationTriangle, FaTimes, FaCheck,
+  FaEye 
 } from 'react-icons/fa';
-import useAuthStore from '../store/useAuthStore'; // 🟢 Tambahkan useAuthStore untuk membaca Role
-import { categoryService } from '../services/categoryService';
+import useAuthStore from '../store/useAuthStore';
+import { authorService } from '../services/authorService';
 
-export default function ManageCategories() {
-  const { user } = useAuthStore(); // 🟢 Panggil user
-  const location = useLocation(); // 🟢 Panggil location
-  const [categories, setCategories] = useState([]);
+export default function ManageUsers() {
+  const { user } = useAuthStore();
+  const location = useLocation();
+  const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const currentLang = localStorage.getItem('pitpage_lang') || 'en';
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
   const [name, setName] = useState('');
-  const [slug, setSlug] = useState('');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Alert State (Success & RESTRICT Error)
+  // Alert State
   const [alert, setAlert] = useState({ type: '', text: '' });
 
-  const fetchCategories = async () => {
+  const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const res = await categoryService.getAllCategories();
-      setCategories(res.data || res || []);
+      const res = await authorService.getAllAuthors();
+      setUsers(Array.isArray(res) ? res : res.data || []);
     } catch (err) {
-      console.error("Gagal memuat kategori:", err);
+      console.error("Gagal memuat pengguna:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCategories();
+    fetchUsers();
   }, []);
 
-  const handleNameChange = (e) => {
-    const val = e.target.value;
-    setName(val);
-    if (!editingCategory) {
-      setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
-    }
-  };
-
-  const handleOpenModal = (cat = null) => {
-    setEditingCategory(cat);
-    if (cat) {
-      setName(cat.name);
-      setSlug(cat.slug);
-    } else {
-      setName('');
-      setSlug('');
-    }
+  const handleOpenModal = (u) => {
+    setEditingUser(u);
+    setName(u.name);
+    setUsername(u.username);
+    setEmail(u.email);
     setIsModalOpen(true);
   };
 
@@ -67,25 +57,17 @@ export default function ManageCategories() {
     setAlert({ type: '', text: '' });
 
     try {
-      if (editingCategory) {
-        await categoryService.updateCategory(editingCategory.id, { name, slug });
-        setAlert({
-          type: 'success',
-          text: currentLang === 'id' ? 'Kategori berhasil diperbarui!' : 'Category updated successfully!'
-        });
-      } else {
-        await categoryService.createCategory({ name, slug });
-        setAlert({
-          type: 'success',
-          text: currentLang === 'id' ? 'Kategori baru berhasil ditambahkan!' : 'New category added successfully!'
-        });
-      }
+      await authorService.updateAuthor(editingUser.id, { name, username, email });
+      setAlert({
+        type: 'success',
+        text: currentLang === 'id' ? 'Data pengguna berhasil diperbarui!' : 'User updated successfully!'
+      });
       setIsModalOpen(false);
-      fetchCategories();
+      fetchUsers();
     } catch (err) {
       setAlert({
         type: 'error',
-        text: err.response?.data?.message || (currentLang === 'id' ? 'Gagal menyimpan kategori.' : 'Failed to save category.')
+        text: err.response?.data?.message || 'Gagal memperbarui pengguna.'
       });
     } finally {
       setIsSubmitting(false);
@@ -95,30 +77,34 @@ export default function ManageCategories() {
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       currentLang === 'id' 
-        ? "Apakah Anda yakin ingin menghapus kategori ini?" 
-        : "Are you sure you want to delete this category?"
+        ? "Apakah Anda yakin ingin menghapus pengguna ini secara permanen?" 
+        : "Are you sure you want to permanently delete this user?"
     );
     if (!confirmDelete) return;
 
     setAlert({ type: '', text: '' });
     try {
-      await categoryService.deleteCategory(id);
+      await authorService.deleteAuthor(id);
       setAlert({
         type: 'success',
-        text: currentLang === 'id' ? 'Kategori berhasil dihapus.' : 'Category deleted successfully.'
+        text: currentLang === 'id' ? 'Pengguna berhasil dihapus.' : 'User deleted successfully.'
       });
-      fetchCategories();
+      fetchUsers();
     } catch (err) {
-      const msg = err.response?.data?.message || (
-        currentLang === 'id'
-          ? 'Kategori ini masih digunakan oleh Artikel dan tidak dapat dihapus (RESTRICT).'
-          : 'This category is still used by Articles and cannot be deleted (RESTRICT).'
-      );
-      setAlert({ type: 'restrict', text: msg });
+      setAlert({ 
+        type: 'error', 
+        text: err.response?.data?.message || 'Gagal menghapus pengguna.' 
+      });
     }
   };
 
-return (
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+    return new Date(dateString).toLocaleDateString(currentLang === 'id' ? 'id-ID' : 'en-US', options);
+  };
+
+  return (
     <div className="bg-[#121212] text-white min-h-screen flex flex-col md:flex-row max-w-[1400px] mx-auto border-x border-gray-900/50">
       
       {/* 🟢 SIDEBAR UNIVERSAL */}
@@ -153,24 +139,18 @@ return (
         </nav>
       </aside>
 
-      {/* 🟢 MAIN CONTENT AREA (Ukuran Disamaratakan) */}
+      {/* MAIN CONTENT */}
       <main className="flex-1 p-6 md:p-10 w-full">
         
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 border-b border-gray-800 pb-6 gap-4">
           <div className="border-l-4 border-[#E10600] pl-4">
             <h1 className="text-2xl md:text-3xl font-extrabold uppercase tracking-tight">
-              {currentLang === 'id' ? 'Manajemen Kategori' : 'Category Management'}
+              {currentLang === 'id' ? 'Manajemen Pengguna' : 'User Management'}
             </h1>
             <p className="text-gray-400 text-xs md:text-sm mt-1">
-              {currentLang === 'id' ? 'Kelola kategori publikasi artikel PitPage.' : 'Manage PitPage article publication categories.'}
+              {currentLang === 'id' ? 'Kelola data author di dalam sistem Paddock.' : 'Manage author data within the Paddock system.'}
             </p>
           </div>
-          <button 
-            onClick={() => handleOpenModal()} 
-            className="bg-[#E10600] hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider px-5 py-3 rounded flex items-center gap-2 transition-all shadow-lg"
-          >
-            <FaPlus /> {currentLang === 'id' ? 'Tambah Kategori' : 'Add Category'}
-          </button>
         </div>
 
         {/* ALERT STATE */}
@@ -181,7 +161,7 @@ return (
               : 'bg-red-500/15 border border-red-500/60 text-red-400'
           }`}>
             <div className="flex items-center gap-3">
-              {alert.type === 'restrict' ? <FaExclamationTriangle className="text-lg shrink-0 text-[#E10600]" /> : <FaCheck />}
+              {alert.type === 'error' ? <FaExclamationTriangle className="text-lg shrink-0 text-[#E10600]" /> : <FaCheck />}
               <span>{alert.text}</span>
             </div>
             <button onClick={() => setAlert({ type: '', text: '' })} className="text-gray-400 hover:text-white"><FaTimes /></button>
@@ -192,11 +172,11 @@ return (
         <div className="bg-[#1A1A1A] border border-gray-800 rounded-lg overflow-hidden shadow-2xl">
           {isLoading ? (
             <div className="p-12 text-center text-gray-500 font-bold uppercase tracking-wider text-xs">
-              {currentLang === 'id' ? 'Memuat Kategori...' : 'Loading Categories...'}
+              {currentLang === 'id' ? 'Memuat Data Pengguna...' : 'Loading Users...'}
             </div>
-          ) : categories.length === 0 ? (
+          ) : users.length === 0 ? (
             <div className="p-12 text-center text-gray-500 italic text-sm">
-              {currentLang === 'id' ? 'Belum ada kategori terdaftar.' : 'No registered categories found.'}
+              {currentLang === 'id' ? 'Belum ada pengguna terdaftar.' : 'No registered users found.'}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -204,27 +184,40 @@ return (
                 <thead>
                   <tr className="bg-[#121212] border-b border-gray-800 text-[11px] font-extrabold uppercase tracking-widest text-gray-400">
                     <th className="p-4 pl-6">ID</th>
-                    <th className="p-4">{currentLang === 'id' ? 'Nama Kategori' : 'Category Name'}</th>
-                    <th className="p-4">Slug</th>
+                    <th className="p-4">{currentLang === 'id' ? 'Nama' : 'Name'}</th>
+                    <th className="p-4">Username</th>
+                    <th className="p-4">Email</th>
+                    <th className="p-4">{currentLang === 'id' ? 'Bergabung' : 'Joined'}</th>
                     <th className="p-4 text-right pr-6">{currentLang === 'id' ? 'Aksi' : 'Actions'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800/60 text-sm">
-                  {categories.map((cat) => (
-                    <tr key={cat.id} className="hover:bg-gray-800/40 transition-colors">
-                      <td className="p-4 pl-6 font-mono text-xs text-gray-500">#{cat.id}</td>
-                      <td className="p-4 font-bold text-white">{cat.name}</td>
-                      <td className="p-4 text-gray-400 font-mono text-xs">{cat.slug}</td>
+                  {users.map((u) => (
+                    <tr key={u.id} className="hover:bg-gray-800/40 transition-colors">
+                      <td className="p-4 pl-6 font-mono text-xs text-gray-500">#{u.id}</td>
+                      <td className="p-4 font-bold text-white">{u.name}</td>
+                      <td className="p-4 text-gray-400 font-mono text-xs">@{u.username}</td>
+                      <td className="p-4 text-gray-400 text-xs">{u.email}</td>
+                      <td className="p-4 text-gray-400 text-xs">{formatDate(u.createdAt)}</td>
+                      
+                      {/* 🟢 KOLOM AKSI (VIEW, EDIT, DELETE) */}
                       <td className="p-4 text-right pr-6 space-x-2">
+                        <Link 
+                          to={`/authors/${u.id}`} 
+                          className="inline-block p-2 bg-blue-950/40 border border-blue-800/50 hover:bg-blue-600 text-blue-400 hover:text-white rounded transition-colors" 
+                          title={currentLang === 'id' ? 'Lihat Profil' : 'View Profile'}
+                        >
+                          <FaEye />
+                        </Link>
                         <button 
-                          onClick={() => handleOpenModal(cat)} 
+                          onClick={() => handleOpenModal(u)} 
                           className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded transition-colors" 
                           title={currentLang === 'id' ? 'Edit' : 'Edit'}
                         >
                           <FaEdit />
                         </button>
                         <button 
-                          onClick={() => handleDelete(cat.id)} 
+                          onClick={() => handleDelete(u.id)} 
                           className="p-2 bg-red-950/40 border border-red-800/50 hover:bg-[#E10600] text-red-400 hover:text-white rounded transition-colors" 
                           title={currentLang === 'id' ? 'Hapus' : 'Delete'}
                         >
@@ -241,64 +234,44 @@ return (
 
       </main>
 
-      {/* MODAL FORM */}
+      {/* MODAL FORM EDIT */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#1A1A1A] border border-gray-800 rounded-lg w-full max-w-md p-6 shadow-2xl relative">
             <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
               <h3 className="text-lg font-bold uppercase tracking-wider text-white">
-                {editingCategory 
-                  ? (currentLang === 'id' ? 'Edit Kategori' : 'Edit Category') 
-                  : (currentLang === 'id' ? 'Tambah Kategori Baru' : 'Add New Category')
-                }
+                {currentLang === 'id' ? 'Edit Pengguna' : 'Edit User'}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white"><FaTimes /></button>
             </div>
 
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                  {currentLang === 'id' ? 'Nama Kategori' : 'Category Name'}
-                </label>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nama</label>
                 <input 
-                  type="text" 
-                  value={name} 
-                  onChange={handleNameChange} 
-                  placeholder={currentLang === 'id' ? 'Contoh: Laporan Balapan' : 'Example: Race Reports'} 
-                  className="w-full bg-[#121212] border border-gray-700 text-white rounded p-3 text-sm focus:outline-none focus:border-[#E10600]"
-                  required 
+                  type="text" value={name} onChange={(e) => setName(e.target.value)} 
+                  className="w-full bg-[#121212] border border-gray-700 text-white rounded p-3 text-sm focus:outline-none focus:border-[#E10600]" required 
                 />
               </div>
-
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Slug</label>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Username</label>
                 <input 
-                  type="text" 
-                  value={slug} 
-                  onChange={(e) => setSlug(e.target.value.toLowerCase())} 
-                  placeholder="race-reports" 
-                  className="w-full bg-[#121212] border border-gray-700 text-gray-400 rounded p-3 text-sm focus:outline-none focus:border-[#E10600]"
-                  required 
+                  type="text" value={username} onChange={(e) => setUsername(e.target.value)} 
+                  className="w-full bg-[#121212] border border-gray-700 text-white rounded p-3 text-sm focus:outline-none focus:border-[#E10600]" required 
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Email</label>
+                <input 
+                  type="email" value={email} onChange={(e) => setEmail(e.target.value)} 
+                  className="w-full bg-[#121212] border border-gray-700 text-white rounded p-3 text-sm focus:outline-none focus:border-[#E10600]" required 
                 />
               </div>
 
               <div className="pt-4 flex justify-end gap-3 border-t border-gray-800">
-                <button 
-                  type="button" 
-                  onClick={() => setIsModalOpen(false)} 
-                  className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold uppercase tracking-wider rounded"
-                >
-                  {currentLang === 'id' ? 'Batal' : 'Cancel'}
-                </button>
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting} 
-                  className="px-6 py-2 bg-[#E10600] hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider rounded transition-colors disabled:opacity-50"
-                >
-                  {isSubmitting 
-                    ? (currentLang === 'id' ? 'Menyimpan...' : 'Saving...') 
-                    : (currentLang === 'id' ? 'Simpan Kategori' : 'Save Category')
-                  }
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold uppercase tracking-wider rounded">Batal</button>
+                <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-[#E10600] hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider rounded transition-colors disabled:opacity-50">
+                  {isSubmitting ? 'MENYIMPAN...' : 'SIMPAN'}
                 </button>
               </div>
             </form>

@@ -1,8 +1,9 @@
 import api from './api';
 
 export const articleService = {
-  getAllArticles: async () => {
-    const response = await api.get('/articles');
+  getAllArticles: async (searchKeyword = '') => {
+    const config = searchKeyword ? { params: { search: searchKeyword } } : {};
+    const response = await api.get('/articles', config);
     return response.data; 
   },
 
@@ -16,7 +17,17 @@ export const articleService = {
     return response.data;
   },
 
-createArticle: async (formData) => {
+  getArticlesByDriver: async (driverId) => {
+    const response = await api.get(`/articles/driver/${driverId}`);
+    return response.data;
+  },
+
+  getArticlesByAuthor: async (authorId) => {
+    const response = await api.get(`/articles/author/${authorId}`);
+    return response.data;
+  },
+
+  createArticle: async (formData) => {
     const response = await api.post('/articles', formData);
     return response.data;
   },
