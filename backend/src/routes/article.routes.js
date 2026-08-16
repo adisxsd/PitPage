@@ -2,11 +2,13 @@ const express = require("express");
 const router = express.Router();
 
 const articleController = require("../controllers/article.controller.js");
+const authorController = require("../controllers/author.controller.js");
 const authenticateToken = require("../middlewares/auth.middleware.js");
 const upload = require("../middlewares/upload.middleware.js");
 
 
 router.get("/", articleController.getAllArticles);
+router.get("/author/:id", articleController.getArticleByAuthorId);
 router.get("/slug/:slug", articleController.getArticleBySlug);
 router.post(
     "/",
