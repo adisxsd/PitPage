@@ -3,43 +3,52 @@ const prisma = require('../config/prisma.js');
 async function findAll(search) {
     return await prisma.article.findMany({
         where: {
-        status: "PUBLISHED",
-        ...(search && {
-                title: {
-                contains: search,
-                mode: "insensitive",
-                },
-                driver: {
-                    name: {
-                        contains: search,
-                        mode: "insensitive",
+            status: "PUBLISHED",
+
+            ...(search && {
+                OR: [
+                    {
+                        title: {
+                            contains: search,
+                            mode: "insensitive",
+                        },
                     },
-                },
+                    {
+                        driver: {
+                            name: {
+                                contains: search,
+                                mode: "insensitive",
+                            },
+                        },
+                    },
+                ],
             }),
         },
+
         include: {
-            author : {
+            author: {
                 select: {
                     id: true,
                     name: true,
                     username: true,
                 },
             },
-            category : {
+            category: {
                 select: {
                     id: true,
                     name: true,
                 },
             },
-            driver : {
+            driver: {
                 select: {
                     id: true,
                     name: true,
                 },
             },
         },
+
         orderBy: {
-            publishedAt: 'desc',
+            publishedAt: "desc",
         },
     });
 }

@@ -11,9 +11,16 @@ async function getCategoryById(id) {
 };
 
 async function createCategory(data) {
-    const category = await categoryRepository.createCategory(data);
-    return category;
-};
+  const slug = data.name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-");
+
+  return await categoryRepository.createCategory({
+    ...data,
+    slug
+  });
+}
 
 async function updateCategory(id, data) {
     const category = await categoryRepository.updateCategory(Number(id), data);

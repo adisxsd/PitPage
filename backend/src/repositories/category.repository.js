@@ -20,6 +20,7 @@ async function createCategory(data) {
     const category = await prisma.category.create({
         data: {
             name: data.name,
+            slug: data.slug,
             description: data.description,
         }
     });
