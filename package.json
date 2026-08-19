@@ -19,7 +19,7 @@
   "main": "server.js",
   "scripts": {
     "start": "server.js"
-  },
+  },  
   "author": "",
   "license": "ISC",
   "devDependencies": {
