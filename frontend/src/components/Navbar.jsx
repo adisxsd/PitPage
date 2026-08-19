@@ -40,9 +40,8 @@ export default function Navbar() {
     }
   };
 
-  // 🟢 LOGIKA PENGECEKAN URL DIPERKUAT
+  //  LOGIKA PENGECEKAN URL DIPERKUAT
   const getNavLinkClass = (path) => {
-    // Menu hanya akan menyala jika path-nya sama persis, ATAU sedang berada di dalam sub-path tersebut (misal: /drivers/1)
     const isActive = currentPath === path || currentPath.startsWith(`${path}/`);
     
     return isActive
@@ -59,7 +58,7 @@ export default function Navbar() {
           <img src={logo} alt="PitPage Logo" className="h-7 md:h-9 object-contain" />
         </Link>
 
-        {/* 🟢 Menu Dinamis Berdasarkan URL Aktif */}
+        {/* Menu Dinamis Berdasarkan URL Aktif */}
         <ul className="hidden md:flex space-x-6 text-sm">
           <li>
             <Link to="/articles" className={getNavLinkClass('/articles')}>
@@ -67,7 +66,7 @@ export default function Navbar() {
             </Link>
           </li>
 
-          {/* 🟢 CEK LOGIN UNTUK MENU DRIVERS */}
+          {/* CEK LOGIN UNTUK MENU DRIVERS */}
           <li>
             {isAuthenticated ? (
               <Link to="/drivers" className={getNavLinkClass('/drivers')}>
@@ -81,17 +80,6 @@ export default function Navbar() {
                 {t.drivers}
               </button>
             )}
-          </li>
-
-          <li>
-            <Link to="/teams" className={getNavLinkClass('/teams')}>
-              {t.teams}
-            </Link>
-          </li>
-          <li>
-            <Link to="/calendar" className={getNavLinkClass('/calendar')}>
-              {t.calendar}
-            </Link>
           </li>
         </ul>
       </div>

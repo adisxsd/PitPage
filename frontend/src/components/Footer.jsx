@@ -7,7 +7,7 @@ export default function Footer() {
     <footer className="bg-[#121212] py-16 mt-10 border-t border-gray-800 flex flex-col items-center justify-center">
       <div className="flex flex-col items-center max-w-4xl mx-auto px-6">
         
-        {/* Bagian Logo Tengah */}
+        {/* Logo Tengah */}
         <Link to="/" className="mb-8 group">
           <img 
             src={logo} 
@@ -16,7 +16,7 @@ export default function Footer() {
           />
         </Link>
 
-        {/* Bagian Menu Navigasi */}
+        {/* Menu Navigasi */}
         <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-sm text-gray-400 font-medium mb-10">
           <Link to="/" className="hover:text-[#E10600] transition-colors">Privacy Policy</Link>
           <Link to="/" className="hover:text-[#E10600] transition-colors">Terms of Service</Link>
@@ -24,7 +24,7 @@ export default function Footer() {
           <Link to="/" className="hover:text-[#E10600] transition-colors">Contact Support</Link>
         </div>
 
-        {/* Bagian Copyright & Telemetry Data */}
+        {/* Copyright & Telemetry Data */}
         <div className="text-xs text-gray-500/70 text-center font-medium">
           &copy; {new Date().getFullYear()} PitPage. Data provided by official telemetry.
         </div>

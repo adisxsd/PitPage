@@ -46,7 +46,7 @@ export default function AuthModal() {
     setSuccessMsg('');
   };
 
-  // 🟢 EKSEKUSI LOGIN YANG DISEMPURNAKAN
+  // EKSEKUSI LOGIN
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -80,7 +80,7 @@ export default function AuthModal() {
     }
   };
 
-  // 🟢 EKSEKUSI REGISTER YANG DISEMPURNAKAN
+  // EKSEKUSI REGISTER
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     if (regPass !== regConfirm) {
@@ -98,7 +98,6 @@ export default function AuthModal() {
         setSuccessMsg("🟢 Registrasi berhasil! Silakan login dengan akun barumu.");
         setRegName(''); setRegUser(''); setRegEmail(''); setRegPass(''); setRegConfirm('');
         
-        // Beri jeda 1.5 detik agar pesan sukses terbaca sebelum pindah ke tab login
         setTimeout(() => {
           switchView('login');
         }, 1500);
@@ -129,7 +128,7 @@ export default function AuthModal() {
         {errorMsg && <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded text-red-400 text-xs text-center">{errorMsg}</div>}
         {successMsg && <div className="mb-4 p-3 bg-green-500/20 border border-green-500 rounded text-green-400 text-xs text-center">{successMsg}</div>}
 
-        {/* --- TAMPILAN LOGIN --- */}
+        {/* Login */}
         {modalView === 'login' ? (
           <div>
             <h2 className="text-2xl font-bold text-white text-center mb-1">Paddock Access</h2>
@@ -179,7 +178,7 @@ export default function AuthModal() {
           </div>
         ) : (
           
-        /* --- TAMPILAN REGISTER --- */
+        /* Regist */
           <div>
             <h2 className="text-2xl font-bold text-white mb-1">Create Account</h2>
             <p className="text-sm text-gray-400 mb-6">Join the paddock for exclusive data and insights.</p>

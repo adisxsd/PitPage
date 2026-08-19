@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { articleService } from '../services/articleService';
-import { categoryService } from '../services/categoryService'; // 🟢 TAMBAHAN IMPORT
+import { categoryService } from '../services/categoryService'; 
 import { translations } from '../utils/translations';
 
 export default function Articles() {
@@ -10,7 +10,7 @@ export default function Articles() {
 
   const [articles, setArticles] = useState([]);
   const [filteredArticles, setFilteredArticles] = useState([]);
-  const [categories, setCategories] = useState([]); // 🟢 STATE KATEGORI DINAMIS
+  const [categories, setCategories] = useState([]); 
   const [activeCategory, setActiveCategory] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -19,8 +19,6 @@ export default function Articles() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        // 🟢 Ambil Artikel dan Kategori secara bersamaan
-        // Gunakan .catch(() => null) agar jika API Category masih dikunci (403), web tidak crash
         const [artRes, catRes] = await Promise.all([
           articleService.getAllArticles(),
           categoryService.getAllCategories().catch(() => null)
@@ -28,7 +26,7 @@ export default function Articles() {
 
         let loadedArticles = [];
         if (artRes.success && Array.isArray(artRes.data)) {
-          // Urutkan artikel dari yang terbaru
+          // Urutkan artikel terbaru
           loadedArticles = artRes.data.sort((a, b) => {
             const dateA = new Date(a.publishedAt || a.createdAt);
             const dateB = new Date(b.publishedAt || b.createdAt);
@@ -38,11 +36,10 @@ export default function Articles() {
           setFilteredArticles(loadedArticles);
         }
 
-        // 🟢 SET KATEGORI DINAMIS
         if (catRes && catRes.success && Array.isArray(catRes.data)) {
-          setCategories(catRes.data); // Pakai data asli dari API Categories
+          setCategories(catRes.data);
         } else {
-          // JURUS CADANGAN: Jika API Categories error/dikunci, ekstrak dari artikel yang ada
+          // CADANGAN: Jika API Categories error/dikunci
           const uniqueCats = Array.from(new Set(loadedArticles.map(a => a.category?.name).filter(Boolean)));
           setCategories(uniqueCats.map((name, idx) => ({ id: `fallback-${idx}`, name })));
         }
@@ -96,7 +93,7 @@ export default function Articles() {
         <p className="text-gray-400 text-sm mt-1">{t.subtitle}</p>
       </div>
 
-      {/* 🟢 TOMBOL FILTER DINAMIS */}
+      {/* FILTER DINAMIS */}
       <div className="flex space-x-3 text-xs md:text-sm font-semibold overflow-x-auto pb-4 mb-10 scrollbar-hide border-b border-gray-800">
         <button
           onClick={() => handleFilterCategory('All')}

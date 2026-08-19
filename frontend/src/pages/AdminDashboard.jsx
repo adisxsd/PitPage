@@ -41,7 +41,7 @@ export default function AdminDashboard() {
   return (
     <div className="bg-[#121212] text-white min-h-screen flex flex-col md:flex-row max-w-[1400px] mx-auto border-x border-gray-900/50">
       
-      {/* 🟢 SIDEBAR UNIVERSAL (TETAP TAMPIL MESKIPUN LOADING) */}
+      {/* SIDEBAR UNIVERSAL */}
       <aside className="w-full md:w-64 bg-[#181818] border-b md:border-b-0 md:border-r border-gray-800 flex flex-col shrink-0">
         <nav className="flex md:flex-col gap-1 p-4 md:pt-8 overflow-x-auto md:overflow-x-visible scrollbar-hide text-xs font-bold uppercase tracking-wider">
           
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
         </nav>
       </aside>
 
-      {/* 🟢 MAIN CONTENT AREA */}
+      {/* MAIN CONTENT AREA */}
       <main className="flex-1 p-6 md:p-10 w-full">
         <div className="mb-8 border-b border-gray-800 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div className="border-l-4 border-[#E10600] pl-4">
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* 🟢 LOADING STATE SEKARANG PINDAH KE DALAM SINI */}
+        {/* LOADING STATE */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20 text-[#E10600] font-bold tracking-widest uppercase text-xs md:text-sm">
             {currentLang === 'id' ? 'Memuat Telemetri Race Control...' : 'Loading Race Control Telemetry...'}

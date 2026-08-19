@@ -7,7 +7,6 @@ import useAuthStore from '../store/useAuthStore';
 
 export default function Drivers() {
   const navigate = useNavigate();
-  // 🟢 Panggil isAuthenticated dan openModal dari store
   const { user, isAuthenticated, openModal } = useAuthStore();
   
   const [drivers, setDrivers] = useState([]);
@@ -16,7 +15,6 @@ export default function Drivers() {
   const currentLang = localStorage.getItem('pitpage_lang') || 'en';
 
   useEffect(() => {
-    // 🟢 PROTEKSI HALAMAN: Jika belum login, tendang ke Home dan buka modal Login
     if (!isAuthenticated) {
       navigate('/');
       openModal('login');
@@ -78,7 +76,7 @@ export default function Drivers() {
     <div className="bg-[#121212] min-h-screen text-white pb-24 pt-10">
       <div className="max-w-[1400px] mx-auto px-6 md:px-16">
         
-        {/* HEADER SECTION (BERSIH TANPA SEARCHBOX) */}
+        {/* HEADER SECTION */}
         <div className="mb-12 pb-6 border-b border-gray-800/80">
           <div className="border-l-4 border-[#E10600] pl-4">
             <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight">
@@ -108,15 +106,15 @@ export default function Drivers() {
                 onClick={() => navigate(`/drivers/${drv.id}`, { state: { driver: drv } })}
                 className="group relative bg-[#1A1A1A] border border-gray-800/80 hover:border-[#E10600] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 shadow-xl hover:shadow-[0_10px_30px_rgba(225,6,0,0.2)] flex flex-col justify-between h-[360px]"
               >
-                {/* Aksen Garis Merah Menyala di Atas saat di-Hover */}
+                {/* Aksen saat di-Hover */}
                 <div className="absolute top-0 inset-x-0 h-1 bg-transparent group-hover:bg-[#E10600] transition-colors z-30"></div>
 
-                {/* Nomor Mobil Raksasa (Watermark Background) */}
+                {/* Nomor Mobil */}
                 <div className="absolute top-4 right-4 text-8xl font-black text-white/[0.03] group-hover:text-[#E10600]/10 transition-colors pointer-events-none select-none z-0 leading-none">
                   {drv.number || '00'}
                 </div>
 
-                {/* Foto Pembalap (Jika Ada) */}
+                {/* Foto Pembalap*/}
                 {drv.photo ? (
                   <div className="absolute inset-0 z-10 flex items-end justify-center pt-10">
                     <img 
@@ -130,7 +128,7 @@ export default function Drivers() {
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#1A1A1A] z-10"></div>
                 )}
 
-                {/* Informasi Atas (Nomor & Tim) */}
+                {/* Informasi Nomor & Tim */}
                 <div className="relative z-20 p-5 flex justify-between items-start">
                   <span className="text-3xl font-black text-white group-hover:text-[#E10600] transition-colors font-mono">
                     #{drv.number || '00'}
@@ -140,7 +138,7 @@ export default function Drivers() {
                   </span>
                 </div>
 
-                {/* Informasi Bawah (Nama & Tombol Aksi) */}
+                {/* Informasi Nama & Act Button */}
                 <div className="relative z-20 p-5 pt-0 flex justify-between items-end border-t border-gray-800/60 mt-auto bg-[#1A1A1A]/80 backdrop-blur-sm">
                   <div>
                     <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-0.5">Driver</p>
