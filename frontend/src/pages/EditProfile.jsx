@@ -154,9 +154,9 @@ return (
             </>
           )}
 
-          <Link to="/dashboard/write" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname.includes('/dashboard/write') || location.pathname.includes('/edit-article') ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
-            <FaPenNib className={location.pathname.includes('/dashboard/write') || location.pathname.includes('/edit-article') ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Edit Artikel' : 'Edit Article'}
-          </Link>
+          <Link to="/dashboard/write" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname.includes('/dashboard/write') || location.pathname.includes('/write-article') ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+                      <FaPenNib className={location.pathname.includes('/dashboard/write') || location.pathname.includes('/write-article') ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Write Artikel' : 'Write Article'}
+                    </Link>
           <Link to="/dashboard/profile" className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${location.pathname === '/dashboard/profile' ? 'bg-[#E10600]/10 border border-[#E10600]/30 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
             <FaUserCog className={location.pathname === '/dashboard/profile' ? 'text-[#E10600] text-base' : 'text-base'} /> {currentLang === 'id' ? 'Profil' : 'Profile'}
           </Link>
@@ -338,7 +338,7 @@ return (
                     </div>
                     <div>
                       <h4 className="font-bold text-sm text-white line-clamp-1 hover:text-[#E10600] transition-colors">
-                        <Link to={art.status === 'DRAFT' ? `/dashboard/edit-article/${art.slug}` : `/articles/${art.slug}`}>
+                        <Link to={art.status === 'DRAFT' ? `/dashboard/write-article/${art.slug}` : `/articles/${art.slug}`}>
                           {art.title}
                         </Link>
                       </h4>
@@ -360,7 +360,7 @@ return (
                     )}
 
                     <Link 
-                      to={`/dashboard/edit-article/${art.slug}`} 
+                      to={`/dashboard/write-article/${art.slug}`} 
                       className="text-xs bg-blue-600/20 border border-blue-500/40 hover:bg-blue-600 text-blue-400 hover:text-white font-semibold px-3 py-1.5 rounded transition-colors"
                     >
                       {currentLang === 'id' ? 'Ubah' : 'Edit'}
