@@ -7,7 +7,8 @@ import useAuthStore from '../store/useAuthStore';
 
 export default function Drivers() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  // 🟢 Panggil isAuthenticated dan openModal dari store
+  const { user, isAuthenticated, openModal } = useAuthStore();
   
   const [drivers, setDrivers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -15,6 +16,13 @@ export default function Drivers() {
   const currentLang = localStorage.getItem('pitpage_lang') || 'en';
 
   useEffect(() => {
+    // 🟢 PROTEKSI HALAMAN: Jika belum login, tendang ke Home dan buka modal Login
+    if (!isAuthenticated) {
+      navigate('/');
+      openModal('login');
+      return;
+    }
+
     const fetchDrivers = async () => {
       try {
         setIsLoading(true);
@@ -56,7 +64,7 @@ export default function Drivers() {
     };
 
     fetchDrivers();
-  }, [user]);
+  }, [user, isAuthenticated, navigate, openModal]);
 
   if (isLoading) {
     return (

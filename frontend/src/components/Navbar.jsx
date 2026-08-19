@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom'; // 🟢 Import useLocation
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaUserCircle, FaPenNib, FaGlobe, FaChartBar } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import useAuthStore from '../store/useAuthStore';
@@ -8,7 +8,7 @@ import { translations } from '../utils/translations';
 export default function Navbar() {
   const { openModal, isAuthenticated, logout, user } = useAuthStore();
   const navigate = useNavigate(); 
-  const location = useLocation(); // 🟢 Ambil path URL saat ini
+  const location = useLocation();
   
   const [lang, setLang] = useState(() => localStorage.getItem('pitpage_lang') || 'en');
   const t = translations[lang]?.navbar || translations.en.navbar;
@@ -40,9 +40,11 @@ export default function Navbar() {
     }
   };
 
-  // 🟢 Helper style untuk mengecek apakah rute sedang aktif
+  // 🟢 LOGIKA PENGECEKAN URL DIPERKUAT
   const getNavLinkClass = (path) => {
-    const isActive = currentPath.startsWith(path);
+    // Menu hanya akan menyala jika path-nya sama persis, ATAU sedang berada di dalam sub-path tersebut (misal: /drivers/1)
+    const isActive = currentPath === path || currentPath.startsWith(`${path}/`);
+    
     return isActive
       ? "text-[#E10600] border-b-2 border-[#E10600] pb-1 font-bold transition-colors"
       : "text-gray-300 hover:text-white transition-colors pb-1 font-semibold";
@@ -64,11 +66,23 @@ export default function Navbar() {
               {t.news}
             </Link>
           </li>
+
+          {/* 🟢 CEK LOGIN UNTUK MENU DRIVERS */}
           <li>
-            <Link to="/drivers" className={getNavLinkClass('/drivers')}>
-              {t.drivers}
-            </Link>
+            {isAuthenticated ? (
+              <Link to="/drivers" className={getNavLinkClass('/drivers')}>
+                {t.drivers}
+              </Link>
+            ) : (
+              <button 
+                onClick={() => openModal('login')} 
+                className={getNavLinkClass('/drivers')}
+              >
+                {t.drivers}
+              </button>
+            )}
           </li>
+
           <li>
             <Link to="/teams" className={getNavLinkClass('/teams')}>
               {t.teams}
