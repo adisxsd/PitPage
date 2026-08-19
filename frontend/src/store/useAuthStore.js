@@ -15,7 +15,6 @@ const useAuthStore = create((set) => ({
     try {
       const response = await authService.login(username, password);
 
-      // Mengambil token & user, baik jika ada di response.data maupun di root response
       const token = response?.data?.token || response?.token;
       const user = response?.data?.user || response?.user;
 
@@ -39,7 +38,6 @@ const useAuthStore = create((set) => ({
     }
   },
 
-  // Fungsi Register
   register: async (name, username, email, password) => {
     try {
       await authService.register(name, username, email, password);
@@ -53,7 +51,6 @@ const useAuthStore = create((set) => ({
     }
   },
 
-  // Fungsi Logout
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

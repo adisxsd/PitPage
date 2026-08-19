@@ -21,7 +21,7 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fungsi Fetch Data
+  // Fetch Data
   const fetchData = async (keyword = '') => {
     try {
       setIsLoading(true);
@@ -45,7 +45,6 @@ export default function Home() {
       setFilteredArticles(loadedArticles);
       setActiveCategory('All');
 
-      // Set Kategori Dinamis
       if (categories.length === 0) {
         if (catRes && catRes.success && Array.isArray(catRes.data)) {
           setCategories(catRes.data);
@@ -62,7 +61,6 @@ export default function Home() {
     }
   };
 
-  // Otomatis jalankan fetch kalau URL pencarian berubah
   useEffect(() => {
     fetchData(urlSearchQuery);
   }, [urlSearchQuery]);
@@ -110,7 +108,7 @@ export default function Home() {
   return (
     <div className="bg-[#121212] text-white min-h-screen pb-20">
       
-      {/* 1. HERO SECTION (Hilang saat search) */}
+      {/* HERO SECTION */}
       {!urlSearchQuery && heroArticle && (
         <section 
           className="relative min-h-[70vh] md:h-[85vh] bg-cover bg-center flex items-center"
@@ -154,7 +152,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* 2. CATEGORY TABS (Hilang saat search) */}
+      {/* CATEGORY TABS */}
       {!urlSearchQuery && (
         <section className="px-6 md:px-16 py-6 border-b border-gray-800/50">
           <div className="flex space-x-3 text-xs md:text-sm font-semibold overflow-x-auto pb-2 scrollbar-hide">
@@ -185,7 +183,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* 3. LATEST / SEARCH RESULTS GRID */}
+      {/* LATEST / SEARCH RESULTS GRID */}
       <section className="px-6 md:px-16 py-12 max-w-[1400px] mx-auto">
         <div className="mb-8 border-b border-gray-800 pb-4">
           <h2 className="text-2xl md:text-3xl font-bold border-l-4 border-[#E10600] pl-4">
@@ -194,7 +192,6 @@ export default function Home() {
               : t.latest_heading
             }
           </h2>
-          {/* 🟢 Search form lokal dihapus agar tidak bentrok / menumpuk dengan navbar */}
         </div>
         
         {filteredArticles.length === 0 ? (
@@ -211,7 +208,7 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* Artikel Besar (Kiri) */}
+            {/* Artikel Besar */}
             {mainArticle && (
               <div className="lg:col-span-2 group cursor-pointer" onClick={() => handleReadArticle(mainArticle.slug)}>
                 <div className="relative h-[300px] md:h-[450px] overflow-hidden rounded-md mb-5">
@@ -250,7 +247,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* Artikel Kecil (Kanan) */}
+            {/* Artikel Kecil */}
             <div className="flex flex-col gap-8">
               
               {sideArticle1 && (

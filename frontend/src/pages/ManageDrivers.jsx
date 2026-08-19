@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom'; // 🟢 Tambahkan useLocation
+import { Link, useLocation } from 'react-router-dom'; 
 import { 
   FaCar, FaPlus, FaEdit, FaTrashAlt, FaChartBar, 
   FaTags, FaPenNib, FaUserCog, FaExclamationTriangle, FaTimes, FaCheck, FaUsers
 } from 'react-icons/fa';
-import useAuthStore from '../store/useAuthStore'; // 🟢 Tambahkan useAuthStore untuk membaca Role
+import useAuthStore from '../store/useAuthStore'; 
 import { driverService } from '../services/driverService';
 
 export default function ManageDrivers() {
-  const { user } = useAuthStore(); // 🟢 Panggil user
-  const location = useLocation(); // 🟢 Panggil location
+  const { user } = useAuthStore(); 
+  const location = useLocation(); 
   const [drivers, setDrivers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -23,7 +23,7 @@ export default function ManageDrivers() {
   const [team, setTeam] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Alert State (Success & RESTRICT Error)
+  // Alert State
   const [alert, setAlert] = useState({ type: '', text: '' });
 
   const fetchDrivers = async () => {
@@ -116,7 +116,7 @@ export default function ManageDrivers() {
 return (
     <div className="bg-[#121212] text-white min-h-screen flex flex-col md:flex-row max-w-[1400px] mx-auto border-x border-gray-900/50">
       
-      {/* 🟢 SIDEBAR UNIVERSAL */}
+      {/* SIDEBAR UNIVERSAL */}
       <aside className="w-full md:w-64 bg-[#181818] border-b md:border-b-0 md:border-r border-gray-800 flex flex-col shrink-0">
         <nav className="flex md:flex-col gap-1 p-4 md:pt-8 overflow-x-auto md:overflow-x-visible scrollbar-hide text-xs font-bold uppercase tracking-wider">
           
@@ -148,7 +148,7 @@ return (
         </nav>
       </aside>
 
-      {/* 🟢 MAIN CONTENT AREA (Ukuran Disamaratakan) */}
+      {/* MAIN CONTENT AREA */}
       <main className="flex-1 p-6 md:p-10 w-full">
         
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 border-b border-gray-800 pb-6 gap-4">

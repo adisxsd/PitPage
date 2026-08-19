@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom'; // 🟢 Import useLocation
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaUserCircle, FaPenNib, FaGlobe, FaChartBar } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import useAuthStore from '../store/useAuthStore';
@@ -8,7 +8,7 @@ import { translations } from '../utils/translations';
 export default function Navbar() {
   const { openModal, isAuthenticated, logout, user } = useAuthStore();
   const navigate = useNavigate(); 
-  const location = useLocation(); // 🟢 Ambil path URL saat ini
+  const location = useLocation();
   
   const [lang, setLang] = useState(() => localStorage.getItem('pitpage_lang') || 'en');
   const t = translations[lang]?.navbar || translations.en.navbar;
@@ -40,9 +40,10 @@ export default function Navbar() {
     }
   };
 
-  // 🟢 Helper style untuk mengecek apakah rute sedang aktif
+  //  LOGIKA PENGECEKAN URL DIPERKUAT
   const getNavLinkClass = (path) => {
-    const isActive = currentPath.startsWith(path);
+    const isActive = currentPath === path || currentPath.startsWith(`${path}/`);
+    
     return isActive
       ? "text-[#E10600] border-b-2 border-[#E10600] pb-1 font-bold transition-colors"
       : "text-gray-300 hover:text-white transition-colors pb-1 font-semibold";
@@ -57,27 +58,28 @@ export default function Navbar() {
           <img src={logo} alt="PitPage Logo" className="h-7 md:h-9 object-contain" />
         </Link>
 
-        {/* 🟢 Menu Dinamis Berdasarkan URL Aktif */}
+        {/* Menu Dinamis Berdasarkan URL Aktif */}
         <ul className="hidden md:flex space-x-6 text-sm">
           <li>
             <Link to="/articles" className={getNavLinkClass('/articles')}>
               {t.news}
             </Link>
           </li>
+
+          {/* CEK LOGIN UNTUK MENU DRIVERS */}
           <li>
-            <Link to="/drivers" className={getNavLinkClass('/drivers')}>
-              {t.drivers}
-            </Link>
-          </li>
-          <li>
-            <Link to="/teams" className={getNavLinkClass('/teams')}>
-              {t.teams}
-            </Link>
-          </li>
-          <li>
-            <Link to="/calendar" className={getNavLinkClass('/calendar')}>
-              {t.calendar}
-            </Link>
+            {isAuthenticated ? (
+              <Link to="/drivers" className={getNavLinkClass('/drivers')}>
+                {t.drivers}
+              </Link>
+            ) : (
+              <button 
+                onClick={() => openModal('login')} 
+                className={getNavLinkClass('/drivers')}
+              >
+                {t.drivers}
+              </button>
+            )}
           </li>
         </ul>
       </div>

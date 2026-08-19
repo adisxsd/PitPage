@@ -199,7 +199,7 @@ export default function ArticleDetail() {
               )}
             </div>
 
-            {/* ISI ARTIKEL DENGAN WHITESPACE-PRE-LINE AGAR ENTER BERFUNGSI */}
+            {/* WHITESPACE-PRE-LINE */}
             <div className="space-y-6 text-gray-300 text-base md:text-lg leading-relaxed">
               <div 
                 className="leading-relaxed text-gray-300 space-y-4 whitespace-pre-line"

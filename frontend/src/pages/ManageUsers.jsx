@@ -107,7 +107,7 @@ export default function ManageUsers() {
   return (
     <div className="bg-[#121212] text-white min-h-screen flex flex-col md:flex-row max-w-[1400px] mx-auto border-x border-gray-900/50">
       
-      {/* 🟢 SIDEBAR UNIVERSAL */}
+      {/* SIDEBAR UNIVERSAL */}
       <aside className="w-full md:w-64 bg-[#181818] border-b md:border-b-0 md:border-r border-gray-800 flex flex-col shrink-0">
         <nav className="flex md:flex-col gap-1 p-4 md:pt-8 overflow-x-auto md:overflow-x-visible scrollbar-hide text-xs font-bold uppercase tracking-wider">
           
@@ -200,7 +200,7 @@ export default function ManageUsers() {
                       <td className="p-4 text-gray-400 text-xs">{u.email}</td>
                       <td className="p-4 text-gray-400 text-xs">{formatDate(u.createdAt)}</td>
                       
-                      {/* 🟢 KOLOM AKSI (VIEW, EDIT, DELETE) */}
+                      {/* ACT Button (VIEW, EDIT, DELETE) */}
                       <td className="p-4 text-right pr-6 space-x-2">
                         <Link 
                           to={`/authors/${u.id}`} 

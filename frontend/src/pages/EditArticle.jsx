@@ -102,7 +102,6 @@ export default function EditArticle() {
     }, 50);
   };
 
-  // 🟢 HANDLE DUA TOMBOL AKSI: SAVE AS DRAFT ATAU PUBLISH ARTICLE
   const handleSubmit = async (e, articleStatus) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -169,7 +168,7 @@ export default function EditArticle() {
 return (
     <div className="bg-[#121212] text-white min-h-screen flex flex-col md:flex-row max-w-[1400px] mx-auto border-x border-gray-900/50">
       
-      {/* 🟢 SIDEBAR UNIVERSAL */}
+      {/* SIDEBAR UNIVERSAL */}
       <aside className="w-full md:w-64 bg-[#181818] border-b md:border-b-0 md:border-r border-gray-800 flex flex-col shrink-0">
         <nav className="flex md:flex-col gap-1 p-4 md:pt-8 overflow-x-auto md:overflow-x-visible scrollbar-hide text-xs font-bold uppercase tracking-wider">
           
@@ -201,7 +200,7 @@ return (
         </nav>
       </aside>
 
-      {/* 🟢 MAIN CONTENT AREA */}
+      {/* MAIN CONTENT AREA */}
       <main className="flex-1 p-6 md:p-10 w-full">
         <div className="mb-8 border-b border-gray-800 pb-6 flex justify-between items-end">
           <div className="border-l-4 border-[#E10600] pl-4">
@@ -370,7 +369,7 @@ return (
               )}
             </div>
 
-            {/* 🟢 DUA TOMBOL AKSI: SAVE AS DRAFT & PUBLISH ARTICLE */}
+            {/* ACT Button SAVE AS DRAFT & PUBLISH ARTICLE */}
             <div className="pt-4 flex flex-col sm:flex-row justify-end gap-3 border-t border-gray-800">
               
               {/* SAVE AS DRAFT */}

@@ -25,7 +25,6 @@ export default function EditProfile() {
   const [myArticles, setMyArticles] = useState([]);
   const [isArticlesLoading, setIsArticlesLoading] = useState(true);
 
-  // 🟢 STATE BARU UNTUK TAB AKTIF (PUBLISHED atau DRAFT)
   const [activeArticleTab, setActiveArticleTab] = useState('PUBLISHED');
 
   const [isLoading, setIsLoading] = useState(false);
@@ -125,18 +124,15 @@ export default function EditProfile() {
     return new Date(dateString).toLocaleDateString(currentLang === 'id' ? 'id-ID' : 'en-US', options);
   };
 
-  // 🟢 LOGIKA FILTER ARTIKEL BERDASARKAN STATUS
-  // Jika status kosong (null), kita anggap sebagai PUBLISHED agar artikel lama tetap muncul.
+  // FILTER ARTIKEL BERDASARKAN STATUS
   const publishedArticles = myArticles.filter(art => art.status === 'PUBLISHED' || !art.status);
   const draftArticles = myArticles.filter(art => art.status === 'DRAFT');
-  
-  // Artikel yang sedang ditampilkan di layar berdasarkan tab yang diklik
   const displayedArticles = activeArticleTab === 'PUBLISHED' ? publishedArticles : draftArticles;
 
 return (
     <div className="bg-[#121212] text-white min-h-screen flex flex-col md:flex-row max-w-[1400px] mx-auto border-x border-gray-900/50">
       
-      {/* 🟢 SIDEBAR UNIVERSAL */}
+      {/* SIDEBAR UNIVERSAL */}
       <aside className="w-full md:w-64 bg-[#181818] border-b md:border-b-0 md:border-r border-gray-800 flex flex-col shrink-0">
         <nav className="flex md:flex-col gap-1 p-4 md:pt-8 overflow-x-auto md:overflow-x-visible scrollbar-hide text-xs font-bold uppercase tracking-wider">
           
@@ -197,7 +193,7 @@ return (
           </div>
         )}
 
-        {/* 1. CONTAINER EDIT PROFILE */}
+        {/* CONTAINER EDIT PROFILE */}
         <section className="bg-[#1A1A1A] border border-gray-800 rounded-lg p-6 md:p-8 shadow-2xl">
           <h2 className="text-lg font-bold uppercase tracking-wider mb-6 text-white border-b border-gray-800 pb-3 flex items-center gap-2">
             <FaUserCog className="text-[#E10600]" /> {t.edit_profile}
@@ -262,7 +258,7 @@ return (
           </form>
         </section>
 
-        {/* 2. CONTAINER MY ARTICLES DENGAN TAB PUBLISHED / DRAFT */}
+        {/* CONTAINER MY ARTICLES DENGAN TAB PUBLISHED / DRAFT */}
         <section className="bg-[#1A1A1A] border border-gray-800 rounded-lg p-6 md:p-8 shadow-2xl">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-bold uppercase tracking-wider text-white flex items-center gap-2">
@@ -276,7 +272,7 @@ return (
             </Link>
           </div>
 
-          {/* 🟢 TABS NAVIGATOR (PUBLISHED / DRAFT) */}
+          {/* TABS NAVIGATOR (PUBLISHED / DRAFT) */}
           <div className="flex gap-6 border-b border-gray-800 mb-6">
             <button
               onClick={() => setActiveArticleTab('PUBLISHED')}
@@ -300,7 +296,6 @@ return (
             </button>
           </div>
 
-          {/* MENAMPILKAN DATA BERDASARKAN TAB YANG DIPILIH */}
           {isArticlesLoading ? (
             <div className="text-center py-10 text-xs text-gray-500 uppercase tracking-widest">
               {currentLang === 'id' ? 'Memuat daftar artikel Anda...' : 'Loading your articles...'}
@@ -334,7 +329,7 @@ return (
                         alt={art.title} 
                         className={`w-full h-full object-cover ${art.status === 'DRAFT' ? 'opacity-50 grayscale' : ''}`}
                       />
-                      {/* Tanda kecil kalau gambarnya Draf */}
+
                       {art.status === 'DRAFT' && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[8px] font-bold text-gray-300 uppercase tracking-widest">
                           DRAFT
@@ -353,9 +348,8 @@ return (
                     </div>
                   </div>
 
-                  {/* TOMBOL AKSI */}
                   <div className="flex items-center gap-2 self-end sm:self-center">
-                    {/* Tombol Lihat hanya muncul jika sudah dipublish */}
+                    
                     {art.status !== 'DRAFT' && (
                       <Link 
                         to={`/articles/${art.slug}`} 

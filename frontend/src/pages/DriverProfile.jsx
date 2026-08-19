@@ -15,7 +15,7 @@ export default function DriverProfile() {
   
   const [driver, setDriver] = useState(initialDriver);
   const [articles, setArticles] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); // 🟢 State loading utama
+  const [isLoading, setIsLoading] = useState(true); 
 
   const currentLang = localStorage.getItem('pitpage_lang') || 'en';
 
@@ -25,7 +25,6 @@ export default function DriverProfile() {
         setIsLoading(true);
         let loadedArticles = [];
 
-        // 1. Coba tembak API Resmi Adis
         try {
           const articlesRes = await articleService.getArticlesByDriver(id);
           if (articlesRes && articlesRes.success && Array.isArray(articlesRes.data)) {
@@ -37,7 +36,6 @@ export default function DriverProfile() {
           console.warn("⚠️ API Endpoint Error.");
         }
 
-        // 2. AUTO-FALLBACK: Jika API Error ATAU data kosong
         if (loadedArticles.length === 0) {
           try {
             const allRes = await articleService.getAllArticles();
@@ -56,7 +54,6 @@ export default function DriverProfile() {
 
         setArticles(loadedArticles);
 
-        // 3. INFO DRIVER
         let loadedDriver = initialDriver;
         if (!loadedDriver) {
           try {
@@ -65,7 +62,6 @@ export default function DriverProfile() {
               loadedDriver = driverRes.data || driverRes;
             }
           } catch (err) {
-            // Abaikan jika ditolak
           }
         }
 
@@ -81,7 +77,7 @@ export default function DriverProfile() {
       } catch (error) {
         console.error("Error loading driver profile:", error);
       } finally {
-        setIsLoading(false); // 🟢 Matikan loading jika semua proses selesai
+        setIsLoading(false); 
       }
     };
 
@@ -99,7 +95,6 @@ export default function DriverProfile() {
     return new Date(dateString).toLocaleDateString(currentLang === 'id' ? 'id-ID' : 'en-US', options);
   };
 
-  // Jika data driver juga belum ada sama sekali (di-refresh langsung dari URL)
   if (isLoading && !driver) {
     return (
       <div className="bg-[#121212] min-h-screen flex items-center justify-center text-[#E10600] font-bold tracking-widest uppercase text-xs pt-20">
@@ -120,7 +115,7 @@ export default function DriverProfile() {
           <FaChevronLeft className="text-[#E10600]" /> {currentLang === 'id' ? 'Kembali ke Pembalap' : 'Back to Drivers'}
         </button>
 
-        {/* HEADER DRIVER INFO (Tampil instan karena data dikirim dari card sebelumnya) */}
+        {/* HEADER DRIVER INFO */}
         <div className="relative bg-[#1A1A1A] border border-gray-800 rounded-xl p-6 md:p-10 mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-xl">
           <div className="relative z-10 border-l-4 border-[#E10600] pl-4">
             <span className="text-xs font-bold text-[#E10600] uppercase tracking-widest bg-[#E10600]/10 border border-[#E10600]/30 px-2.5 py-1 rounded">
@@ -149,16 +144,13 @@ export default function DriverProfile() {
           <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-2">
             <span className="w-3 h-3 bg-[#E10600] rounded-sm inline-block"></span>
             {currentLang === 'id' ? 'Artikel Terkait' : 'Related Articles'} 
-            {/* Hanya tampilkan jumlah jika loading sudah selesai */}
             {!isLoading && (
               <span className="text-gray-500 text-base font-normal">({articles.length})</span>
             )}
           </h2>
         </div>
 
-        {/* RENDER ARTIKEL DIPERBAIKI DI SINI */}
         {isLoading ? (
-          /* STATE 1: SEDANG LOADING ARTIKEL */
           <div className="flex justify-center items-center py-20 border border-dashed border-gray-800 rounded-xl bg-[#181818]/30">
             <div className="text-[#E10600] font-bold tracking-widest uppercase text-xs animate-pulse flex items-center gap-3">
               <span className="w-4 h-4 rounded-full bg-[#E10600] animate-ping"></span>
@@ -166,7 +158,7 @@ export default function DriverProfile() {
             </div>
           </div>
         ) : articles.length === 0 ? (
-          /* STATE 2: LOADING SELESAI & ARTIKEL KOSONG (NOT FOUND) */
+          
           <div className="text-center py-24 border border-dashed border-gray-800 rounded-xl bg-[#181818]/30">
             <span className="text-5xl mb-4 block grayscale opacity-40">🏁</span>
             <h3 className="text-xl font-bold uppercase tracking-wider text-white mb-2">
@@ -179,7 +171,7 @@ export default function DriverProfile() {
             </p>
           </div>
         ) : (
-          /* STATE 3: LOADING SELESAI & ARTIKEL ADA */
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles.map((article) => (
               <div 
