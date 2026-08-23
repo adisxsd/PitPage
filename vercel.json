@@ -1,32 +1,4 @@
 {
-<<<<<<< HEAD
-    "services": {
-        "frontend": {
-            "root": "frontend",
-            "framework": "vite"
-        },
-        "backend": {
-            "root": "backend"
-        }
-    },
-    "rewrites": [
-        {
-            "source": "/api(/.*)?",
-            "destination": {
-                "type": "service",
-                "service": "backend"
-            }
-        },
-        {
-            "source": "/(.*)",
-            "destination": {
-                "type": "service",
-                "service": "frontend"
-            }
-        }
-    ]
-}
-=======
   "version": 2,
   "builds": [
     {
@@ -52,4 +24,3 @@
     }
   ]
 }
->>>>>>> aab66c075acf1c97394cc845e5e91b11a47c7bac
