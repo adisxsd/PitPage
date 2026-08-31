@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://pitpage-production.up.railway.app/articles', 
+  baseURL: 'https://pitpage-production.up.railway.app/', 
   headers: {
     'Content-Type': 'application/json',
   },
